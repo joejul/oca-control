@@ -94,6 +94,34 @@ export type ClosureDetail = {
     consumption: ConsumptionEntry[];
 };
 
+export type EventType =
+    | 'Happy Hour'
+    | 'Karaoke'
+    | 'Viernes de Ocaso'
+    | 'DJ Night'
+    | 'Especial'
+    | 'Cerrado'
+    | 'Otro';
+
+export type ArtStatus = 'pending' | 'completed';
+
+export type AgendaEvent = {
+    id: number;
+    month: string;
+    date: string | null;
+    type: EventType;
+    theme: string | null;
+    schedule: string | null;
+    cover: string | null;
+    promo: string | null;
+    artists: string | null;
+    price: string | null;
+    internal_cost: number | null;
+    art_status: ArtStatus;
+    created_at: string;
+    updated_at: string;
+};
+
 export type AdminUser = {
     id: number;
     username: string;

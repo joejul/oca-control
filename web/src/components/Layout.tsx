@@ -16,7 +16,10 @@ export default function Layout({children}: { children: ReactNode }) {
     return (
         <div className="app">
             <header className="topbar">
-                <div className="brand">OCASO CAFE BAR</div>
+                <div className="brand">
+                    <img src="/control/logo-icon.png" alt="" className="brand-logo" />
+                    OCASO CAFE BAR
+                </div>
                 <div className="topbar-right">
                     {user && (<span className="welcome">Bienvenido <strong>{user.display_name}</strong></span>)}
 
@@ -33,6 +36,7 @@ export default function Layout({children}: { children: ReactNode }) {
                     <NavLink to="/admin/cierre">Cierre</NavLink>
                     <NavLink to="/admin/cierres">Historial</NavLink>
                     <NavLink to="/admin/usuarios">Usuarios</NavLink>
+                    <NavLink to="/agenda">Agenda</NavLink>
                 </nav>
             )}
 

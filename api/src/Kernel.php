@@ -8,6 +8,7 @@ use App\Controllers\AdminUserController;
 use App\Controllers\AuthController;
 use App\Controllers\ClosureController;
 use App\Controllers\ConsumptionController;
+use App\Controllers\EventsController;
 use App\Controllers\OvertimeController;
 use App\Controllers\VacationController;
 use App\Http\HttpException;
@@ -64,6 +65,7 @@ final class Kernel
         $usersC       = new AdminUserController();
         $closureC     = new ClosureController();
         $vacationC    = new VacationController();
+        $eventsC      = new EventsController();
 
         // --- Publicas ---
         $this->router->post('/auth/login', fn (Request $r) => $authC->login($r));
@@ -92,6 +94,23 @@ final class Kernel
         ));
         $this->router->get('/vacation/mine', $this->protect(
             fn (Request $r) => $vacationC->mine($this->currentUser)
+        ));
+
+        // --- Agenda (cualquier usuario autenticado) ---
+        $this->router->get('/agenda/events', $this->protect(
+            fn (Request $r) => $eventsC->list($r)
+        ));
+        $this->router->post('/agenda/events', $this->protect(
+            fn (Request $r) => $eventsC->create($r, $this->currentUser)
+        ));
+        $this->router->patch('/agenda/events/{id}', $this->protect(
+            fn (Request $r, array $a) => $eventsC->update($this->currentUser, (int) $a['id'], $r)
+        ));
+        $this->router->post('/agenda/events/{id}/delete', $this->protect(
+            fn (Request $r, array $a) => $eventsC->delete($this->currentUser, (int) $a['id'])
+        ));
+        $this->router->post('/agenda/generate', $this->protect(
+            fn (Request $r) => $eventsC->generate($this->currentUser, $r)
         ));
 
         // --- Solo admin ---

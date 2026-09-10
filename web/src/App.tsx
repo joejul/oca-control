@@ -14,6 +14,10 @@ import ClosureNew from './pages/admin/ClosureNew';
 import ClosureHistory from './pages/admin/ClosureHistory';
 import ClosureDetail from './pages/admin/ClosureDetail';
 import Users from './pages/admin/Users';
+import AgendaShell from './pages/agenda/AgendaShell';
+import Agenda from './pages/agenda/Agenda';
+import Guia from './pages/agenda/Guia';
+import Resumen from './pages/agenda/Resumen';
 
 function Protected({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const { user, loading } = useAuth();
@@ -34,7 +38,13 @@ export default function App() {
         path="/"
         element={
           <Protected>
-            {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Home />}
+            {user?.username === 'ocaso' ? (
+              <Navigate to="/agenda" replace />
+            ) : user?.role === 'admin' ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Home />
+            )}
           </Protected>
         }
       />
@@ -42,6 +52,10 @@ export default function App() {
       <Route path="/consumo" element={<Protected><ConsumptionForm /></Protected>} />
       <Route path="/vacaciones" element={<Protected><VacationForm /></Protected>} />
       <Route path="/mis-registros" element={<Protected><MyEntries /></Protected>} />
+
+      <Route path="/agenda" element={<Protected><AgendaShell><Agenda /></AgendaShell></Protected>} />
+      <Route path="/agenda/guia" element={<Protected><AgendaShell><Guia /></AgendaShell></Protected>} />
+      <Route path="/agenda/resumen" element={<Protected><AgendaShell><Resumen /></AgendaShell></Protected>} />
 
       <Route path="/admin" element={<Protected admin><Dashboard /></Protected>} />
       <Route path="/admin/aprobaciones" element={<Protected admin><Approvals /></Protected>} />
