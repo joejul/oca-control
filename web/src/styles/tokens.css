@@ -1,0 +1,31 @@
+/* tokens.css — paleta y variables base
+ * Deep Space Blue / Brick Ember / Amber Flame / Cool Steel / Steel Blue
+ */
+
+:root {
+  --bg: #eef1f4;
+  --card: #ffffff;
+  --ink: #1c3144; /* Deep Space Blue */
+  --muted: #5a6b7b;
+  --brand: #1c3144;
+  --brand-dark: #142434; /* barra de pestañas */
+  --brand-ink: #ffffff;
+  --accent: #ffba08; /* Amber Flame */
+  --info: #3f88c5; /* Steel Blue */
+  --ok: #3f88c5;
+  --danger: #d00000; /* Brick Ember */
+  --line: #d5dae0;
+  --steel: #a2aebb; /* Cool Steel */
+  --neutral: #e2e6eb; /* fondos suaves (botón neutro, tarjetas de total) */
+
+  /* Tintes para estados (pills / mensajes) */
+  --pending-bg: #fff2d1;
+  --pending-ink: #8a6400;
+  --approved-bg: #dcebf7;
+  --approved-ink: #1f5c8f;
+  --danger-bg: #fbdada;
+  --danger-ink: #a01414;
+
+  --radius: 14px;
+  --shadow: 0 1px 3px rgba(28, 49, 68, 0.1), 0 6px 18px rgba(28, 49, 68, 0.06);
+}

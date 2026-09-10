@@ -1,0 +1,22 @@
+# dependencies
+/api/vendor/
+/web/node_modules/
+
+# build output
+/web/dist/
+
+# local config / secrets
+/api/config.php
+*.local
+
+# ddev
+/.ddev/.gitignore
+/.ddev/*.yaml.bak
+
+# logs / os
+*.log
+.DS_Store
+
+# generated / build cache
+/api/.phpunit.cache/
+*.tsbuildinfo

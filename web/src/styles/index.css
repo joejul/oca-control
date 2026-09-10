@@ -1,0 +1,27 @@
+/**
+ * Hoja de estilos principal. Cada archivo cubre una zona de la app:
+ *
+ *   tokens.css    Variables de color, radios, sombras (la paleta)
+ *   base.css      Reset, tipografía, helpers genéricos (.muted, .center…)
+ *   layout.css    Estructura: .app, .topbar, .tabs, .content, .stack
+ *   buttons.css   .btn y sus variantes (primary / ok / danger / ghost / sm…)
+ *   forms.css     label, inputs, asterisco de obligatorio (.req), .segmented
+ *   cards.css     .card, .big-btn (home), .login
+ *   feedback.css  .pill (estados), .badge, mensajes (.error-box / .warn-inline)
+ *   data.css      Filas y tablas: .row, .entry, .totals-row, .report
+ *   dialog.css    Modal de confirmación (.overlay, .dialog)
+ *   print.css     Ajustes para imprimir / exportar PDF
+ *
+ * El orden importa para la cascada: tokens → base → todo lo demás.
+ */
+
+@import './tokens.css';
+@import './base.css';
+@import './layout.css';
+@import './buttons.css';
+@import './forms.css';
+@import './cards.css';
+@import './feedback.css';
+@import './data.css';
+@import './dialog.css';
+@import './print.css';

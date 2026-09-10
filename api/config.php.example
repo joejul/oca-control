@@ -1,0 +1,52 @@
+<?php
+/**
+ * Copia este archivo a config.php y ajusta los valores.
+ * config.php NO se sube a git ni al repositorio publico.
+ */
+
+return [
+    // --- Base de datos ---
+    'db' => [
+        'host' => getenv('DB_HOST') ?: '127.0.0.1',
+        'port' => getenv('DB_PORT') ?: '3306',
+        'name' => getenv('DB_NAME') ?: 'db',
+        'user' => getenv('DB_USER') ?: 'db',
+        'pass' => getenv('DB_PASSWORD') ?: 'db',
+        'charset' => 'utf8mb4',
+    ],
+
+    // Zona horaria para todas las marcas de tiempo.
+    'timezone' => 'America/Costa_Rica',
+
+    // Prefijo que hay que quitarle a REQUEST_URI antes de enrutar.
+    // Local (ddev, docroot = api/public): ''.
+    // Produccion (Hostinger, archivos en public_html/control/api): '/control/api'.
+    'api_prefix' => getenv('API_PREFIX') !== false ? getenv('API_PREFIX') : '',
+
+    // Origenes permitidos para CORS (el dev server de Vite).
+    // En produccion el front va en el mismo dominio, se puede dejar vacio.
+    'cors_origins' => [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+    ],
+
+    // Dias de vigencia del token de sesion.
+    'token_ttl_days' => 30,
+
+    // Intentos de login fallidos antes de bloquear, y minutos de bloqueo.
+    'max_login_attempts' => 5,
+    'lockout_minutes' => 15,
+
+    // Notificacion por correo al admin cuando llega una solicitud nueva
+    // (horas extra o vacaciones). Dejar 'mail' => [] o sin 'host'/'admin_to'
+    // desactiva el envio silenciosamente (util en local).
+    'mail' => [
+        'host'      => 'smtp.hostinger.com',
+        'port'      => 465,
+        'username'  => 'info@ocasocafebar.com',
+        'password'  => getenv('MAIL_PASSWORD') ?: '',
+        'from'      => 'info@ocasocafebar.com',
+        'from_name' => 'OCASO CAFE BAR',
+        'admin_to'  => 'joejul815@gmail.com',
+    ],
+];

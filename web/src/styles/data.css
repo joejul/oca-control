@@ -1,0 +1,88 @@
+/* data.css — listados y tablas: filas, entradas, totales, reporte */
+
+/* --- Filas simples y encabezado de entrada --- */
+.row,
+.entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.row + .row {
+  margin-top: 0.6rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.6rem;
+}
+
+.row small.block {
+  font-size: 0.82rem;
+}
+
+.entry-actions,
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Registros anulados: atenuados y tachados */
+.is-voided {
+  opacity: 0.55;
+}
+
+.is-voided td:first-child,
+.row.is-voided strong {
+  text-decoration: line-through;
+}
+
+/* --- Tarjetas de total (Horas / Consumos) --- */
+.totals-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.total-card {
+  flex: 1;
+  background: var(--neutral);
+  border-radius: 12px;
+  padding: 0.7rem;
+  text-align: center;
+}
+
+.total-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.total-value {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-top: 0.2rem;
+}
+
+/* --- Tabla de reporte / cierre --- */
+.report {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.report th,
+.report td {
+  text-align: left;
+  padding: 0.5rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.report th:not(:first-child),
+.report td:not(:first-child) {
+  text-align: right;
+}
+
+.report tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--ink);
+}

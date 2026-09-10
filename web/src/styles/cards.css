@@ -1,0 +1,78 @@
+/* cards.css — tarjetas, botones grandes del home, tarjeta de login */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card > * + * {
+  margin-top: 0.7rem;
+}
+
+.link-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* --- Botones grandes del home del colaborador --- */
+.big-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow);
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+
+.big-btn:hover {
+  box-shadow: 0 2px 6px rgba(28, 49, 68, 0.14), 0 10px 26px rgba(28, 49, 68, 0.1);
+}
+
+.big-btn:active {
+  transform: scale(0.99);
+}
+
+.big-btn.secondary {
+  background: var(--neutral);
+  box-shadow: none;
+}
+
+.big-btn-icon {
+  font-size: 1.8rem;
+}
+
+.big-btn strong {
+  display: block;
+}
+
+.big-btn small {
+  color: var(--muted);
+}
+
+.big-btn .badge {
+  margin-left: auto;
+}
+
+.hello {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* --- Login --- */
+.login {
+  width: 100%;
+  max-width: 340px;
+}
+
+.login h1 {
+  margin-bottom: 0;
+}

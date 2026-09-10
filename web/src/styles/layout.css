@@ -1,0 +1,120 @@
+/* layout.css — estructura de página: contenedor, barra superior, pestañas */
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* --- Barra superior --- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+  padding: 0.7rem 1rem;
+  padding-top: max(0.7rem, env(safe-area-inset-top));
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.topbar-right .btn {
+  flex-shrink: 0;
+}
+
+.welcome {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.welcome strong {
+  color: #fff;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.88rem;
+  margin-left: 0.2rem;
+}
+
+/* Teléfonos angostos: bajar un poco la marca para que quepa el saludo */
+@media (max-width: 360px) {
+  .brand {
+    font-size: 0.92rem;
+  }
+  .welcome {
+    font-size: 0;
+    letter-spacing: 0;
+  }
+  .welcome strong {
+    font-size: 0.82rem;
+    margin-left: 0;
+  }
+}
+
+.topbar .btn.ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.topbar .btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: #fff;
+}
+
+/* --- Pestañas de admin --- */
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  background: var(--brand-dark);
+  padding: 0 0.5rem;
+}
+
+.tabs a {
+  flex: 0 0 auto;
+  color: var(--steel);
+  text-decoration: none;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.9rem;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s;
+}
+
+.tabs a:hover {
+  color: #fff;
+}
+
+.tabs a.active {
+  color: #fff;
+  border-bottom-color: var(--accent);
+}
+
+/* --- Contenido --- */
+.content {
+  padding: 1rem;
+  padding-bottom: 3rem;
+}
+
+.stack > * + * {
+  margin-top: 1rem;
+}
