@@ -10,6 +10,7 @@
  *   feedback.css  .pill (estados), .badge, mensajes (.error-box / .warn-inline)
  *   data.css      Filas y tablas: .row, .entry, .totals-row, .report
  *   dialog.css    Modal de confirmación (.overlay, .dialog)
+ *   agenda.css    Módulo Agenda: tarjetas de evento, sub-tabs, grid
  *   print.css     Ajustes para imprimir / exportar PDF
  *
  * El orden importa para la cascada: tokens → base → todo lo demás.
@@ -24,4 +25,5 @@
 @import './feedback.css';
 @import './data.css';
 @import './dialog.css';
+@import './agenda.css';
 @import './print.css';

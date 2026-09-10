@@ -26,6 +26,8 @@ $people = [
     ['username' => 'will',    'display_name' => 'Will',     'role' => 'collaborator', 'pin' => 'w8434'],
     ['username' => 'vanessa', 'display_name' => 'Vanessa',  'role' => 'collaborator', 'pin' => 'v4139'],
     ['username' => 'adriana', 'display_name' => 'Adriana',  'role' => 'collaborator', 'pin' => 'a1341'],
+    // Cuenta compartida (Fer/Joseph/Julian) solo para el modulo Agenda.
+    ['username' => 'ocaso',   'display_name' => 'OCASO', 'role' => 'collaborator', 'pin' => 'ocaso0909'],
 ];
 
 $insert = $pdo->prepare(

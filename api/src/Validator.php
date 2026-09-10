@@ -78,6 +78,14 @@ final class Validator
         return $num;
     }
 
+    public static function optionalDecimal(mixed $value, string $field, float $min, float $max): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return self::requireDecimal($value, $field, $min, $max);
+    }
+
     public static function requireDate(mixed $value, string $field): string
     {
         if (!is_string($value)) {
@@ -89,6 +97,22 @@ final class Validator
             throw HttpException::unprocessable("El campo '$field' debe tener formato AAAA-MM-DD.", ['field' => $field]);
         }
         return $value;
+    }
+
+    public static function optionalDate(mixed $value, string $field): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return self::requireDate($value, $field);
+    }
+
+    public static function requireMonth(mixed $value, string $field = 'month'): string
+    {
+        if (!is_string($value) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', trim($value))) {
+            throw HttpException::unprocessable("El campo '$field' debe tener formato AAAA-MM.", ['field' => $field]);
+        }
+        return trim($value);
     }
 
     public static function requirePin(mixed $value, string $field = 'pin'): string

@@ -76,6 +76,12 @@ final class Request
         return $this->body[$key] ?? $default;
     }
 
+    /** Distingue "la clave viene en el body (aunque sea null)" de "no vino". */
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->body);
+    }
+
     public function queryParam(string $key, ?string $default = null): ?string
     {
         $v = $this->query[$key] ?? $default;
