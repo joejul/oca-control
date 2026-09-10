@@ -1,0 +1,41 @@
+# Copiar como  public_html/control/.htaccess
+#
+# Estructura esperada en el servidor:
+#   public_html/control/
+#     .htaccess            <- este archivo
+#     index.html + assets/ <- contenido de web/dist/
+#     api/
+#       public/index.php   <- front controller
+#       src/ ...
+#       config.php         <- credenciales (API_PREFIX = /control/api)
+#       vendor/
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /control/
+
+    # --- API: /control/api/... -> api/public/index.php ---
+    RewriteRule ^api/(.*)$ api/public/index.php [QSA,L]
+    RewriteRule ^api/?$   api/public/index.php [QSA,L]
+
+    # --- SPA: cualquier ruta que no sea un archivo real -> index.html ---
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# No servir el codigo PHP ni el config directamente (solo el front controller).
+<FilesMatch "\.(php|sql|md|json|lock|dist)$">
+    Require all denied
+</FilesMatch>
+<Files "index.php">
+    Require all granted
+</Files>
+
+# Cache de assets con hash.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2|png|svg|jpg|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>

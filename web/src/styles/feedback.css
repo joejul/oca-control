@@ -1,0 +1,69 @@
+/* feedback.css — pills de estado, badge de conteo, cajas de mensaje */
+
+.pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--neutral);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pill.pending {
+  background: var(--pending-bg);
+  color: var(--pending-ink);
+}
+
+.pill.approved {
+  background: var(--approved-bg);
+  color: var(--approved-ink);
+}
+
+.pill.rejected,
+.pill.voided {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+}
+
+/* Conteo (p. ej. aprobaciones pendientes) */
+.badge {
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+/* --- Cajas de mensaje --- */
+.error-box {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.warn-inline {
+  background: var(--pending-bg);
+  color: var(--pending-ink);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+}
+
+.success h2 {
+  color: var(--ok);
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}

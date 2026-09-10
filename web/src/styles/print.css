@@ -1,0 +1,19 @@
+/* print.css — ajustes al imprimir o exportar a PDF (detalle de cierre) */
+
+@media print {
+  .topbar,
+  .tabs,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 0;
+    padding: 0;
+  }
+}

@@ -1,0 +1,67 @@
+/* dialog.css — modal de confirmación (componente ConfirmDialog) */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 49, 68, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+/* Filas "etiqueta : valor" con los datos a confirmar */
+.confirm-rows {
+  margin: 0.8rem 0;
+}
+
+.confirm-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.confirm-rows dt {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.confirm-rows dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Contenido extra (p. ej. campo de motivo en una anulación) */
+.dialog-extra {
+  margin: 0.6rem 0;
+}
+
+.dialog .warning {
+  background: var(--pending-bg);
+  color: var(--pending-ink);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.dialog-actions .btn {
+  flex: 1;
+}
