@@ -37,13 +37,14 @@ public_html/control/
     src/                 <- todo el código PHP
     migrations/
     public/index.php
-    config.php           <- deploy/config.production.php con tus credenciales
+    config.php           <- deploy/config.production.php.example con tus credenciales
     vendor/              <- ver paso 4
 ```
 
 - Copiá `deploy/htaccess-control` → `public_html/control/.htaccess`.
-- Copiá `deploy/config.production.php` → `public_html/control/api/config.php` y completá
-  las credenciales de la base.
+- Copiá `deploy/config.production.php.example` → `public_html/control/api/config.php` y
+  completá las credenciales reales (base de datos y SMTP). Ese archivo final nunca debe
+  subirse a git.
 - **No** subas `api/config.php` local, `node_modules/`, ni `web/` completo.
 
 ## 4. Dependencias PHP (`vendor/`)
