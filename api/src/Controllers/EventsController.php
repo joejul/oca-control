@@ -190,45 +190,79 @@ final class EventsController
         $month = Validator::requireMonth($r->input('month'), 'month');
         $pdo   = Database::pdo();
 
-        $existing = $pdo->prepare('SELECT date FROM events WHERE month = :m AND date IS NOT NULL');
-        $existing->execute(['m' => $month]);
-        $existingDates = array_flip($existing->fetchAll(\PDO::FETCH_COLUMN));
+        // Lock por mes: si dos personas (o un doble-click) disparan "Generar Mes"
+        // a la vez, la segunda espera a que la primera termine y confirme en vez
+        // de leer las mismas fechas "existentes" y duplicar los eventos base.
+        $lockName = 'agenda_generate_' . $month;
+        $lockStmt = $pdo->prepare('SELECT GET_LOCK(:name, 5)');
+        $lockStmt->execute(['name' => $lockName]);
+        if (!$lockStmt->fetchColumn()) {
+            throw HttpException::unprocessable(
+                'Otra persona está generando este mes en este momento. Intenta de nuevo en unos segundos.'
+            );
+        }
 
-        $first       = new \DateTimeImmutable($month . '-01');
-        $daysInMonth = (int) $first->format('t');
+        try {
+            $existing = $pdo->prepare('SELECT date FROM events WHERE month = :m AND date IS NOT NULL');
+            $existing->execute(['m' => $month]);
+            $existingDates = array_flip($existing->fetchAll(\PDO::FETCH_COLUMN));
 
-        $insert = $pdo->prepare(
-            'INSERT INTO events (month, date, type, theme, schedule, artists, promo, internal_cost, art_status)
-             VALUES (:m, :d, :t, :th, :sch, :a, :pr, :cost, :s)'
-        );
+            $first       = new \DateTimeImmutable($month . '-01');
+            $daysInMonth = (int) $first->format('t');
 
-        $created = 0;
-        for ($day = 1; $day <= $daysInMonth; $day++) {
-            $dateStr = sprintf('%s-%02d', $month, $day);
-            $isoDow  = (int) (new \DateTimeImmutable($dateStr))->format('N'); // 1=Lun .. 7=Dom
+            $insert = $pdo->prepare(
+                'INSERT INTO events (month, date, type, theme, schedule, artists, promo, internal_cost, art_status)
+                 VALUES (:m, :d, :t, :th, :sch, :a, :pr, :cost, :s)'
+            );
 
-            if (!isset(self::BASE_WEEK[$isoDow]) || isset($existingDates[$dateStr])) {
-                continue;
+            $created = 0;
+            for ($day = 1; $day <= $daysInMonth; $day++) {
+                $dateStr = sprintf('%s-%02d', $month, $day);
+                $isoDow  = (int) (new \DateTimeImmutable($dateStr))->format('N'); // 1=Lun .. 7=Dom
+
+                if (!isset(self::BASE_WEEK[$isoDow]) || isset($existingDates[$dateStr])) {
+                    continue;
+                }
+
+                $cfg = self::BASE_WEEK[$isoDow];
+                $insert->execute([
+                    'm'    => $month,
+                    'd'    => $dateStr,
+                    't'    => $cfg['type'],
+                    'th'   => $cfg['theme'],
+                    'sch'  => $cfg['schedule'],
+                    'a'    => $cfg['artists'],
+                    'pr'   => $cfg['promo'],
+                    'cost' => $cfg['internal_cost'],
+                    's'    => 'pending',
+                ]);
+                $created++;
             }
-
-            $cfg = self::BASE_WEEK[$isoDow];
-            $insert->execute([
-                'm'    => $month,
-                'd'    => $dateStr,
-                't'    => $cfg['type'],
-                'th'   => $cfg['theme'],
-                'sch'  => $cfg['schedule'],
-                'a'    => $cfg['artists'],
-                'pr'   => $cfg['promo'],
-                'cost' => $cfg['internal_cost'],
-                's'    => 'pending',
-            ]);
-            $created++;
+        } finally {
+            $release = $pdo->prepare('SELECT RELEASE_LOCK(:name)');
+            $release->execute(['name' => $lockName]);
         }
 
         Audit::log((int) $user['id'], 'event.generate', 'event', null, ['month' => $month, 'created' => $created]);
 
         return Response::json(['created' => $created]);
+    }
+
+    /** @param array<string,mixed> $user */
+    public function deleteMonth(array $user, Request $r): Response
+    {
+        $month = Validator::requireMonth($r->input('month'), 'month');
+
+        $stmt = Database::pdo()->prepare('DELETE FROM events WHERE month = :m');
+        $stmt->execute(['m' => $month]);
+        $deleted = $stmt->rowCount();
+
+        Audit::log((int) $user['id'], 'event.delete_month', 'event', null, [
+            'month'   => $month,
+            'deleted' => $deleted,
+        ]);
+
+        return Response::json(['month' => $month, 'deleted' => $deleted]);
     }
 
     private static function validateType(mixed $value): string

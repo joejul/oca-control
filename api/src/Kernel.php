@@ -112,6 +112,9 @@ final class Kernel
         $this->router->post('/agenda/generate', $this->protect(
             fn (Request $r) => $eventsC->generate($this->currentUser, $r)
         ));
+        $this->router->post('/agenda/delete-month', $this->adminOnly(
+            fn (Request $r) => $eventsC->deleteMonth($this->currentUser, $r)
+        ));
 
         // --- Solo admin ---
         $this->router->get('/admin/overtime', $this->adminOnly(

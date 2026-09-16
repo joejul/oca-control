@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../auth';
 import { ApiError } from '../../api';
 import { today } from '../../format';
-import { createEvent, generateWeek, listEvents } from '../../agenda-api';
+import { createEvent, deleteMonth, generateWeek, listEvents } from '../../agenda-api';
 import type { AgendaEvent } from '../../types';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import EventCard from './EventCard';
 import {
   countMissingTheme, currentMonth, defaultCollapsedKeys, groupByWeek, monthLabel, shiftMonth, weekSummary,
@@ -12,6 +13,7 @@ import {
 export default function Agenda() {
   const { user } = useAuth();
   const isEditor = user?.username === 'ocaso';
+  const isAdmin = user?.role === 'admin';
 
   const [month, setMonth] = useState(currentMonth);
   const [events, setEvents] = useState<AgendaEvent[]>([]);
@@ -21,6 +23,8 @@ export default function Agenda() {
   const [adding, setAdding] = useState(false);
   const [justCreatedId, setJustCreatedId] = useState<number | null>(null);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
+  const [confirmingDeleteMonth, setConfirmingDeleteMonth] = useState(false);
+  const [deletingMonth, setDeletingMonth] = useState(false);
 
   const load = useCallback(async (m: string) => {
     setLoading(true);
@@ -50,6 +54,20 @@ export default function Agenda() {
       setError(e instanceof ApiError ? e.message : 'No se pudo generar la semana base.');
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleDeleteMonth() {
+    setDeletingMonth(true);
+    setError(null);
+    try {
+      await deleteMonth(month);
+      setEvents([]);
+      setConfirmingDeleteMonth(false);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : 'No se pudo borrar el mes.');
+    } finally {
+      setDeletingMonth(false);
     }
   }
 
@@ -116,6 +134,15 @@ export default function Agenda() {
               </button>
             </>
           )}
+          {isAdmin && events.length > 0 && (
+            <button
+              type="button"
+              className="btn ghost sm agenda-delete"
+              onClick={() => setConfirmingDeleteMonth(true)}
+            >
+              🗑 Borrar mes
+            </button>
+          )}
         </div>
       </div>
 
@@ -178,6 +205,20 @@ export default function Agenda() {
           });
         })()
       )}
+
+      <ConfirmDialog
+        open={confirmingDeleteMonth}
+        title={`¿Borrar todos los eventos de ${monthLabel(month)}?`}
+        rows={[
+          ['Mes', monthLabel(month)],
+          ['Eventos que se van a borrar', String(events.length)],
+        ]}
+        warning="Esta acción no se puede deshacer."
+        confirmLabel="Borrar mes"
+        busy={deletingMonth}
+        onConfirm={handleDeleteMonth}
+        onCancel={() => setConfirmingDeleteMonth(false)}
+      />
     </div>
   );
 }

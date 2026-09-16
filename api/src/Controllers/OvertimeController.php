@@ -109,30 +109,33 @@ final class OvertimeController
     /** @param array<string,mixed> $admin */
     public function review(array $admin, int $id, string $newStatus, Request $r): Response
     {
-        $entry = self::find($id);
-
-        if ($entry['closure_id'] !== null) {
-            throw HttpException::unprocessable('Este registro ya fue cerrado, no se puede cambiar.');
-        }
-        if ($entry['voided_at'] !== null) {
-            throw HttpException::unprocessable('Este registro esta anulado.');
-        }
-        if ($entry['status'] !== 'pending') {
-            throw HttpException::unprocessable('Este registro ya fue revisado.');
-        }
-
         $note = Validator::optionalString($r->input('note'), 'note', 500);
 
-        Database::pdo()->prepare(
-            'UPDATE overtime_entries
+        // El estado 'pending' se exige dentro del propio UPDATE (no en un SELECT
+        // previo) para que dos admins aprobando/rechazando a la vez no pasen
+        // ambos la validación antes de que el otro escriba.
+        $stmt = Database::pdo()->prepare(
+            "UPDATE overtime_entries
              SET status = :s, reviewed_by = :rb, reviewed_at = NOW(), review_note = :rn
-             WHERE id = :id'
-        )->execute([
+             WHERE id = :id AND status = 'pending' AND voided_at IS NULL AND closure_id IS NULL"
+        );
+        $stmt->execute([
             's'  => $newStatus,
             'rb' => $admin['id'],
             'rn' => $note,
             'id' => $id,
         ]);
+
+        if ($stmt->rowCount() === 0) {
+            $entry = self::find($id);
+            if ($entry['closure_id'] !== null) {
+                throw HttpException::unprocessable('Este registro ya fue cerrado, no se puede cambiar.');
+            }
+            if ($entry['voided_at'] !== null) {
+                throw HttpException::unprocessable('Este registro esta anulado.');
+            }
+            throw HttpException::unprocessable('Este registro ya fue revisado.');
+        }
 
         Audit::log((int) $admin['id'], 'overtime.' . $newStatus, 'overtime', $id, ['note' => $note]);
 
@@ -142,21 +145,22 @@ final class OvertimeController
     /** @param array<string,mixed> $admin */
     public function void(array $admin, int $id, Request $r): Response
     {
-        $entry  = self::find($id);
         $reason = Validator::requireString($r->input('reason'), 'reason', 3, 500);
 
-        if ($entry['closure_id'] !== null) {
-            throw HttpException::unprocessable('Este registro ya fue cerrado, no se puede anular.');
-        }
-        if ($entry['voided_at'] !== null) {
-            throw HttpException::unprocessable('Este registro ya estaba anulado.');
-        }
-
-        Database::pdo()->prepare(
+        $stmt = Database::pdo()->prepare(
             'UPDATE overtime_entries
              SET voided_at = NOW(), voided_by = :vb, void_reason = :vr
-             WHERE id = :id'
-        )->execute(['vb' => $admin['id'], 'vr' => $reason, 'id' => $id]);
+             WHERE id = :id AND closure_id IS NULL AND voided_at IS NULL'
+        );
+        $stmt->execute(['vb' => $admin['id'], 'vr' => $reason, 'id' => $id]);
+
+        if ($stmt->rowCount() === 0) {
+            $entry = self::find($id);
+            if ($entry['closure_id'] !== null) {
+                throw HttpException::unprocessable('Este registro ya fue cerrado, no se puede anular.');
+            }
+            throw HttpException::unprocessable('Este registro ya estaba anulado.');
+        }
 
         Audit::log((int) $admin['id'], 'overtime.void', 'overtime', $id, ['reason' => $reason]);
 

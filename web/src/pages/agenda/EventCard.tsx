@@ -62,28 +62,52 @@ export default function EventCard({event, onUpdated, onDeleted, autoExpand, read
     const [expanded, setExpanded] = useState(Boolean(autoExpand));
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
-    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timers = useRef<Partial<Record<keyof AgendaEvent, ReturnType<typeof setTimeout>>>>({});
+    /** Campos con una edición local más reciente que la última respuesta del server. */
+    const dirtyKeys = useRef<Set<keyof AgendaEvent>>(new Set());
+    const draftRef = useRef(draft);
+    draftRef.current = draft;
 
     useEffect(() => {
-        setDraft(event);
+        // No pisar campos que el usuario está editando: si llega una respuesta
+        // vieja del server mientras se sigue escribiendo, se borraba el texto
+        // y el cursor saltaba al final.
+        setDraft((prev) => {
+            const next = {...event};
+            for (const key of dirtyKeys.current) {
+                (next as Record<string, unknown>)[key] = (prev as Record<string, unknown>)[key];
+            }
+            return next;
+        });
     }, [event]);
 
     useEffect(() => () => {
-        if (timer.current) clearTimeout(timer.current);
+        Object.values(timers.current).forEach((t) => t && clearTimeout(t));
     }, []);
 
+    function commit<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
+        void updateEvent(event.id, {[key]: value} as Partial<AgendaEvent>).then((updated) => {
+            if (draftRef.current[key] === value) {
+                dirtyKeys.current.delete(key);
+            }
+            onUpdated(updated);
+        });
+    }
+
     function fieldDebounced<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
+        dirtyKeys.current.add(key);
         setDraft((prev) => ({...prev, [key]: value}));
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => {
-            void updateEvent(event.id, {[key]: value} as Partial<AgendaEvent>).then(onUpdated);
-        }, 500);
+        const existing = timers.current[key];
+        if (existing) clearTimeout(existing);
+        timers.current[key] = setTimeout(() => commit(key, value), 500);
     }
 
     function fieldNow<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
+        dirtyKeys.current.add(key);
         setDraft((prev) => ({...prev, [key]: value}));
-        if (timer.current) clearTimeout(timer.current);
-        void updateEvent(event.id, {[key]: value} as Partial<AgendaEvent>).then(onUpdated);
+        const existing = timers.current[key];
+        if (existing) clearTimeout(existing);
+        commit(key, value);
     }
 
     async function handleDelete() {

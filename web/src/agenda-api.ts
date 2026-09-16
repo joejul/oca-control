@@ -25,3 +25,7 @@ export function deleteEvent(id: number) {
 export function generateWeek(month: string) {
   return api<{ created: number }>('/agenda/generate', { method: 'POST', body: { month } });
 }
+
+export function deleteMonth(month: string) {
+  return api<{ month: string; deleted: number }>('/agenda/delete-month', { method: 'POST', body: { month } });
+}
