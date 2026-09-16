@@ -63,18 +63,19 @@ export default function EventCard({event, onUpdated, onDeleted, autoExpand, read
     const [confirmingDelete, setConfirmingDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const timers = useRef<Partial<Record<keyof AgendaEvent, ReturnType<typeof setTimeout>>>>({});
-    /** Campos con una edición local más reciente que la última respuesta del server. */
-    const dirtyKeys = useRef<Set<keyof AgendaEvent>>(new Set());
-    const draftRef = useRef(draft);
-    draftRef.current = draft;
+    /**
+     * Campos que este componente ya editó alguna vez. El server normaliza
+     * texto (trim de espacios) al guardar, así que su respuesta nunca vuelve
+     * a pisar el valor local de estos campos: si lo hiciera, un espacio
+     * escrito justo antes de que el guardado debounced se dispare desaparece
+     * solo (el server lo recorta y esa respuesta se refleja en el input).
+     */
+    const editedKeys = useRef<Set<keyof AgendaEvent>>(new Set());
 
     useEffect(() => {
-        // No pisar campos que el usuario está editando: si llega una respuesta
-        // vieja del server mientras se sigue escribiendo, se borraba el texto
-        // y el cursor saltaba al final.
         setDraft((prev) => {
             const next = {...event};
-            for (const key of dirtyKeys.current) {
+            for (const key of editedKeys.current) {
                 (next as Record<string, unknown>)[key] = (prev as Record<string, unknown>)[key];
             }
             return next;
@@ -86,16 +87,11 @@ export default function EventCard({event, onUpdated, onDeleted, autoExpand, read
     }, []);
 
     function commit<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
-        void updateEvent(event.id, {[key]: value} as Partial<AgendaEvent>).then((updated) => {
-            if (draftRef.current[key] === value) {
-                dirtyKeys.current.delete(key);
-            }
-            onUpdated(updated);
-        });
+        void updateEvent(event.id, {[key]: value} as Partial<AgendaEvent>).then(onUpdated);
     }
 
     function fieldDebounced<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
-        dirtyKeys.current.add(key);
+        editedKeys.current.add(key);
         setDraft((prev) => ({...prev, [key]: value}));
         const existing = timers.current[key];
         if (existing) clearTimeout(existing);
@@ -103,7 +99,7 @@ export default function EventCard({event, onUpdated, onDeleted, autoExpand, read
     }
 
     function fieldNow<K extends keyof AgendaEvent>(key: K, value: AgendaEvent[K]) {
-        dirtyKeys.current.add(key);
+        editedKeys.current.add(key);
         setDraft((prev) => ({...prev, [key]: value}));
         const existing = timers.current[key];
         if (existing) clearTimeout(existing);
