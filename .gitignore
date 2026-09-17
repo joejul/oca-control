@@ -8,6 +8,7 @@
 # local config / secrets
 /api/config.php
 /deploy/config.production.php
+/api/bin/seed.php
 *.local
 
 # ddev
