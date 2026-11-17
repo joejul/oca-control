@@ -34,7 +34,7 @@
 
 .confirm-rows dt {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .confirm-rows dd {
@@ -53,7 +53,7 @@
   color: var(--pending-ink);
   border-radius: 10px;
   padding: 0.55rem 0.7rem;
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 
 .dialog-actions {

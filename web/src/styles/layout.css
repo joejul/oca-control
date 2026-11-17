@@ -1,7 +1,7 @@
 /* layout.css — estructura de página: contenedor, barra superior, pestañas */
 
 .app {
-  max-width: 640px;
+  max-width: 720px;
   margin: 0 auto;
   min-height: 100vh;
 }
@@ -12,9 +12,9 @@
   top: 0;
   z-index: 5;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
+  gap: 0.2rem 0.6rem;
   background: var(--brand);
   color: var(--brand-ink);
   padding: 0.7rem 1rem;
@@ -22,6 +22,7 @@
 }
 
 .brand {
+  order: 1;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -38,18 +39,22 @@
 }
 
 .topbar-right {
+  order: 2;
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  min-width: 0;
 }
 
 .topbar-right .btn {
   flex-shrink: 0;
 }
 
+/* Saludo: en celular va en su propia línea debajo de la marca (con letra de 16px no cabe al lado) */
 .welcome {
-  font-size: 0.72rem;
+  order: 3;
+  flex-basis: 100%;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--steel);
@@ -62,21 +67,18 @@
   color: #fff;
   text-transform: none;
   letter-spacing: 0;
-  font-size: 0.88rem;
   margin-left: 0.2rem;
 }
 
-/* Teléfonos angostos: bajar un poco la marca para que quepa el saludo */
-@media (max-width: 360px) {
-  .brand {
-    font-size: 0.92rem;
-  }
+/* Pantallas más anchas: el saludo va en la misma línea, entre la marca y los botones */
+@media (min-width: 560px) {
   .welcome {
-    font-size: 0;
-    letter-spacing: 0;
+    order: 2;
+    flex-basis: auto;
+    margin-left: auto;
   }
-  .welcome strong {
-    font-size: 0.82rem;
+  .topbar-right {
+    order: 3;
     margin-left: 0;
   }
 }
@@ -105,7 +107,7 @@
   color: var(--steel);
   text-decoration: none;
   padding: 0.6rem 0.7rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
   border-bottom: 3px solid transparent;
   transition: color 0.15s;
 }

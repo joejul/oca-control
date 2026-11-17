@@ -30,6 +30,11 @@ h2 {
   margin: 0 0 0.6rem;
 }
 
+/* Tamaño mínimo de letra del sitio: 16px (el <small> del navegador baja a ~13px) */
+small {
+  font-size: 1rem;
+}
+
 /* Helpers reutilizables */
 .center {
   min-height: 70vh;
@@ -47,5 +52,5 @@ h2 {
 }
 
 small.block {
-  font-size: 0.82rem;
+  font-size: 1rem;
 }

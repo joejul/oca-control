@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
-import { money, hours as fmtHours, minutes as fmtMinutes } from '../../format';
+import { dateOnly, money, hours as fmtHours, minutes as fmtMinutes, today } from '../../format';
 import type { ClosurePreview, MakeupHours, OvertimeEntry, VacationRequest } from '../../types';
 
 export default function Dashboard() {
@@ -20,7 +20,8 @@ export default function Dashboard() {
     api<{ total_minutes: number }>('/admin/time-debt')
       .then((r) => setDue(r.total_minutes))
       .catch(() => setDue(null));
-    api<ClosurePreview>('/admin/closure/preview')
+    // Todo lo abierto hasta hoy (el cierre sugerido llega al próximo 15 o 30).
+    api<ClosurePreview>(`/admin/closure/preview?end=${today()}`)
       .then(setPreview)
       .catch(() => setPreview(null));
   }, []);
@@ -52,7 +53,7 @@ export default function Dashboard() {
         <section className="card">
           <h2>Período abierto</h2>
           <p className="muted">
-            {preview.start} → {preview.end}
+            {dateOnly(preview.start)} → hoy
           </p>
           <div className="totals-row">
             <div className="total-card">

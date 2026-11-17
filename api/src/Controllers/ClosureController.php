@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Audit;
+use App\ClosurePeriod;
 use App\Database;
 use App\Http\HttpException;
 use App\Http\Request;
@@ -18,19 +19,23 @@ final class ClosureController
 {
     public function preview(Request $r): Response
     {
-        [$start, $end] = $this->resolveRange(
-            $r->queryParam('start'),
-            $r->queryParam('end')
-        );
+        $period = $this->resolvePeriod($r->queryParam('start'), $r->queryParam('end'));
+        $start  = $period['start'];
+        $end    = $period['end'];
 
         $data = $this->computeTotals($start, $end);
 
         return Response::json([
-            'start'         => $start,
-            'end'           => $end,
-            'rows'          => $data['rows'],
-            'totals'        => $data['totals'],
-            'pending_count' => $data['pending_count'],
+            'start'           => $start,
+            'end'             => $end,
+            // Con un cierre anterior, el inicio es fijo (dia siguiente) para no dejar dias sin cerrar.
+            'start_locked'    => $period['last_end'] !== null,
+            'last_end'        => $period['last_end'],
+            'suggested_label' => ClosurePeriod::label($start, $end),
+            'rows'            => $data['rows'],
+            'totals'          => $data['totals'],
+            'pending_count'   => $data['pending_count'],
+            'carried_count'   => $data['carried_count'],
         ]);
     }
 
@@ -42,18 +47,38 @@ final class ClosureController
         if ($start > $end) {
             throw HttpException::unprocessable('La fecha inicial no puede ser mayor que la final.');
         }
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        if ($end > $today) {
+            throw HttpException::unprocessable(
+                'Ese periodo todavia no termina: el cierre puede llegar como maximo hasta hoy (' . self::fmt($today) . ').'
+            );
+        }
         $label = Validator::optionalString($r->input('label'), 'label', 120)
-            ?? ('Cierre ' . $start . ' a ' . $end);
+            ?? ClosurePeriod::label($start, $end);
 
         $pdo = Database::pdo();
-        $data = $this->computeTotals($start, $end);
 
-        if ($data['totals']['overtime_hours'] === 0.0 && $data['totals']['consumption_total'] === 0.0) {
-            throw HttpException::unprocessable('No hay registros aprobados en ese rango para cerrar.');
+        // Si quien llama ya abrio una transaccion (las pruebas la deshacen al final), se usa esa.
+        $ownTx = !$pdo->inTransaction();
+        if ($ownTx) {
+            $pdo->beginTransaction();
         }
-
-        $pdo->beginTransaction();
         try {
+            // Se bloquea el ultimo cierre mientras se valida y se inserta: dos cierres
+            // simultaneos no pueden quedar con el mismo inicio.
+            $last = $pdo->query('SELECT MAX(end_date) FROM closures FOR UPDATE')->fetchColumn();
+            if ($last) {
+                $expected = ClosurePeriod::nextStart((string) $last);
+                if ($start !== $expected) {
+                    throw HttpException::unprocessable(
+                        'El cierre debe empezar el ' . self::fmt($expected)
+                        . ', justo despues del cierre anterior, para no dejar dias sin cerrar.'
+                    );
+                }
+            }
+
+            $data = $this->computeTotals($start, $end);
+
             $pdo->prepare(
                 'INSERT INTO closures (label, start_date, end_date, generated_by, totals_json)
                  VALUES (:l, :s, :e, :by, :t)'
@@ -66,27 +91,32 @@ final class ClosureController
             ]);
             $closureId = (int) $pdo->lastInsertId();
 
-            // Horas extra: se archivan las ya resueltas (aprobadas/rechazadas) o anuladas.
-            // Las pendientes quedan abiertas para el proximo cierre.
+            // Horas extra: se archivan las ya resueltas (aprobadas/rechazadas) o anuladas, de
+            // cualquier fecha hasta $end: asi lo que se aprobo tarde de un periodo anterior no se
+            // pierde. Las pendientes quedan abiertas para el proximo cierre.
             $pdo->prepare(
                 "UPDATE overtime_entries
                  SET closure_id = :cid
                  WHERE closure_id IS NULL
-                   AND work_date BETWEEN :s AND :e
+                   AND work_date <= :e
                    AND (status IN ('approved','rejected') OR voided_at IS NOT NULL)"
-            )->execute(['cid' => $closureId, 's' => $start, 'e' => $end]);
+            )->execute(['cid' => $closureId, 'e' => $end]);
 
-            // Consumos: se archivan todos los del rango (anulados o no).
+            // Consumos: se archivan todos los no archivados hasta $end (anulados o no).
             $pdo->prepare(
                 'UPDATE consumption_entries
                  SET closure_id = :cid
                  WHERE closure_id IS NULL
-                   AND DATE(created_at) BETWEEN :s AND :e'
-            )->execute(['cid' => $closureId, 's' => $start, 'e' => $end]);
+                   AND DATE(created_at) <= :e'
+            )->execute(['cid' => $closureId, 'e' => $end]);
 
-            $pdo->commit();
+            if ($ownTx) {
+                $pdo->commit();
+            }
         } catch (\Throwable $e) {
-            $pdo->rollBack();
+            if ($ownTx && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
 
@@ -211,34 +241,44 @@ final class ClosureController
 
     // ---------------------------------------------------------------------
 
-    /** @return array{0:string,1:string} */
-    private function resolveRange(?string $start, ?string $end): array
+    /**
+     * Periodo a cerrar. Con un cierre anterior el inicio SIEMPRE es el dia siguiente a su
+     * fin (se ignora cualquier `start` que llegue). Sin cierres previos, es el parametro o
+     * la fecha mas antigua con registros. El fin por defecto es el proximo dia de pago.
+     *
+     * @return array{start:string, end:string, last_end:?string}
+     */
+    private function resolvePeriod(?string $startParam, ?string $endParam): array
     {
-        $end = $end !== null && $end !== ''
-            ? Validator::requireDate($end, 'end')
-            : (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $pdo     = Database::pdo();
+        $lastEnd = $pdo->query('SELECT MAX(end_date) FROM closures')->fetchColumn() ?: null;
 
-        if ($start !== null && $start !== '') {
-            $start = Validator::requireDate($start, 'start');
-            return [min($start, $end), $end];
-        }
-
-        $pdo = Database::pdo();
-        $lastEnd = $pdo->query('SELECT MAX(end_date) FROM closures')->fetchColumn();
         if ($lastEnd) {
-            $start = (new \DateTimeImmutable($lastEnd . ' +1 day'))->format('Y-m-d');
+            $start = ClosurePeriod::nextStart((string) $lastEnd);
+        } elseif ($startParam !== null && $startParam !== '') {
+            $start = Validator::requireDate($startParam, 'start');
         } else {
             $minOt = $pdo->query('SELECT MIN(work_date) FROM overtime_entries')->fetchColumn();
             $minCo = $pdo->query('SELECT MIN(DATE(created_at)) FROM consumption_entries')->fetchColumn();
             $candidates = array_filter([$minOt, $minCo]);
-            $start = $candidates ? min($candidates) : $end;
+            $start = $candidates ? (string) min($candidates) : (new \DateTimeImmutable('today'))->format('Y-m-d');
         }
 
-        // Nunca devolver un rango invertido (p. ej. si el ultimo cierre llega hasta hoy).
-        return [min($start, $end), $end];
+        $end = $endParam !== null && $endParam !== ''
+            ? Validator::requireDate($endParam, 'end')
+            : ClosurePeriod::suggestedEnd($start);
+
+        // Nunca devolver un rango invertido.
+        return ['start' => $start, 'end' => max($start, $end), 'last_end' => $lastEnd ? (string) $lastEnd : null];
     }
 
-    /** @return array{rows:array<int,array<string,mixed>>, totals:array<string,float>, pending_count:int} */
+    private static function fmt(string $isoDate): string
+    {
+        [$y, $m, $d] = explode('-', $isoDate);
+        return "$d/$m/$y";
+    }
+
+    /** @return array{rows:array<int,array<string,mixed>>, totals:array<string,float>, pending_count:int, carried_count:int} */
     private function computeTotals(string $start, string $end): array
     {
         $pdo = Database::pdo();
@@ -257,14 +297,14 @@ final class ClosureController
                  SELECT user_id, SUM(hours) AS hours
                  FROM overtime_entries
                  WHERE closure_id IS NULL AND status = 'approved' AND voided_at IS NULL
-                   AND work_date BETWEEN :s1 AND :e1
+                   AND work_date <= :e1
                  GROUP BY user_id
              ) ot ON ot.user_id = u.id
              LEFT JOIN (
                  SELECT consumer_id, SUM(amount) AS total
                  FROM consumption_entries
                  WHERE closure_id IS NULL AND voided_at IS NULL
-                   AND DATE(created_at) BETWEEN :s2 AND :e2
+                   AND DATE(created_at) <= :e2
                  GROUP BY consumer_id
              ) co ON co.consumer_id = u.id
              LEFT JOIN ($dueSql) td ON td.user_id = u.id
@@ -272,7 +312,7 @@ final class ClosureController
                AND (ot.hours IS NOT NULL OR co.total IS NOT NULL OR u.active = 1 OR td.due > 0)
              ORDER BY u.display_name"
         );
-        $stmt->execute(['s1' => $start, 'e1' => $end, 's2' => $start, 'e2' => $end]);
+        $stmt->execute(['e1' => $end, 'e2' => $end]);
 
         $rows = [];
         $sumHours = 0.0;
@@ -297,9 +337,22 @@ final class ClosureController
         $pending = $pdo->prepare(
             "SELECT COUNT(*) FROM overtime_entries
              WHERE closure_id IS NULL AND status = 'pending' AND voided_at IS NULL
-               AND work_date BETWEEN :s AND :e"
+               AND work_date <= :e"
         );
-        $pending->execute(['s' => $start, 'e' => $end]);
+        $pending->execute(['e' => $end]);
+
+        // Registros de fechas anteriores al inicio que nunca se habian cerrado (p. ej. horas
+        // aprobadas despues del cierre de su quincena): entran en este cierre.
+        $carriedOt = $pdo->prepare(
+            "SELECT COUNT(*) FROM overtime_entries
+             WHERE closure_id IS NULL AND status = 'approved' AND voided_at IS NULL AND work_date < :s"
+        );
+        $carriedOt->execute(['s' => $start]);
+        $carriedCo = $pdo->prepare(
+            'SELECT COUNT(*) FROM consumption_entries
+             WHERE closure_id IS NULL AND voided_at IS NULL AND DATE(created_at) < :s'
+        );
+        $carriedCo->execute(['s' => $start]);
 
         return [
             'rows'          => $rows,
@@ -309,6 +362,7 @@ final class ClosureController
                 'makeup_due_minutes' => $sumDue,
             ],
             'pending_count' => (int) $pending->fetchColumn(),
+            'carried_count' => (int) $carriedOt->fetchColumn() + (int) $carriedCo->fetchColumn(),
         ];
     }
 

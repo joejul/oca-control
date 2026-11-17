@@ -16,7 +16,7 @@
 }
 
 .row small.block {
-  font-size: 0.82rem;
+  font-size: 1rem;
 }
 
 .entry-actions,
@@ -52,7 +52,7 @@
 
 .total-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 1rem;
   color: var(--muted);
 }
 
@@ -67,7 +67,7 @@
 .report {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .report th,
@@ -90,7 +90,7 @@
 /* --- Bitácora --- */
 .audit-when {
   white-space: nowrap;
-  font-size: 0.78rem;
+  font-size: 1rem;
 }
 
 .pager {

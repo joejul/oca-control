@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../../api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Req from '../../components/Req';
-import { hours as fmtHours, minutes as fmtMinutes, money } from '../../format';
+import { dateOnly, hours as fmtHours, minutes as fmtMinutes, money, today } from '../../format';
 import type { ClosurePreview } from '../../types';
 
 export default function ClosureNew() {
@@ -42,6 +42,16 @@ export default function ClosureNew() {
       (r) => r.overtime_hours > 0 || r.consumption_total > 0 || (r.makeup_due_minutes ?? 0) > 0,
     ) ?? [];
   const empty = !preview || (preview.totals.overtime_hours === 0 && preview.totals.consumption_total === 0);
+  const todayStr = today();
+  const notYet = end > todayStr;
+  const finalLabel = label.trim() || preview?.suggested_label || '';
+
+  function changeEnd(value: string) {
+    if (!value) return;
+    setEnd(value);
+    // Con cierre anterior el inicio es fijo y lo decide el servidor.
+    loadPreview(preview?.start_locked ? undefined : start, value);
+  }
 
   async function generate() {
     setBusy(true);
@@ -68,25 +78,42 @@ export default function ClosureNew() {
         <div className="field-row">
           <label>
             Desde <Req />
-            <input type="date" value={start} max={end} onChange={(e) => setStart(e.target.value)} />
+            <input
+              type="date"
+              value={start}
+              max={end}
+              disabled={preview?.start_locked}
+              onChange={(e) => setStart(e.target.value)}
+              onBlur={() => !preview?.start_locked && start && loadPreview(start, end)}
+            />
           </label>
           <label>
             Hasta <Req />
-            <input type="date" value={end} min={start} onChange={(e) => setEnd(e.target.value)} />
+            <input
+              type="date"
+              value={end}
+              min={start}
+              max={todayStr}
+              onChange={(e) => changeEnd(e.target.value)}
+            />
           </label>
         </div>
+        {preview?.start_locked && preview.last_end && (
+          <small className="help">
+            El inicio es fijo: continúa desde el cierre anterior (terminó el {dateOnly(preview.last_end)}),
+            así no se salta ningún día.
+          </small>
+        )}
         <label>
           Nombre del cierre
           <input
             value={label}
             maxLength={120}
-            placeholder="ej. Quincena 1 setiembre"
+            placeholder={preview?.suggested_label ?? 'Cierre'}
             onChange={(e) => setLabel(e.target.value)}
           />
+          <small className="help">Si lo deja vacío se usa: {preview?.suggested_label ?? '…'}</small>
         </label>
-        <button className="btn ghost block" onClick={() => loadPreview(start, end)} disabled={loading}>
-          Actualizar vista previa
-        </button>
       </div>
 
       {error && <p className="error-box">{error}</p>}
@@ -94,17 +121,34 @@ export default function ClosureNew() {
 
       {preview && !loading && (
         <>
+          {notYet && (
+            <p className="warn-inline">
+              ⚠️ Ese período termina el {dateOnly(end)} y todavía no ha llegado. Podrá generarlo ese día,
+              o elija una fecha final de hoy o anterior.
+            </p>
+          )}
+          {preview.carried_count > 0 && (
+            <p className="warn-inline">
+              ℹ️ Este cierre incluye {preview.carried_count} registro(s) de fechas anteriores a {dateOnly(start)} que
+              nunca se habían cerrado (por ejemplo, horas aprobadas después del cierre de su quincena).
+            </p>
+          )}
           {preview.pending_count > 0 && (
             <p className="warn-inline">
               ⚠️ Hay {preview.pending_count} hora(s) extra <strong>pendientes</strong> en este rango.
-              No se incluirán en el cierre; quedan para el próximo. Revisalas primero si querés
+              No se incluirán en el cierre; quedan para el próximo. Revíselas primero si quiere
               incluirlas.
             </p>
           )}
 
           <section className="card">
             <h2>Vista previa</h2>
-            {rows.length === 0 && <p className="muted">Sin registros para cerrar en este rango.</p>}
+            {rows.length === 0 && (
+              <p className="muted">
+                Sin registros para cerrar en este rango. Aun así puede generar el cierre para mantener
+                la secuencia de fechas.
+              </p>
+            )}
             {rows.length > 0 && (
               <table className="report">
                 <thead>
@@ -141,11 +185,7 @@ export default function ClosureNew() {
             )}
           </section>
 
-          <button
-            className="btn primary block"
-            disabled={empty}
-            onClick={() => setConfirming(true)}
-          >
+          <button className="btn primary block" disabled={notYet} onClick={() => setConfirming(true)}>
             Generar cierre y archivar
           </button>
         </>
@@ -153,15 +193,19 @@ export default function ClosureNew() {
 
       <ConfirmDialog
         open={confirming}
-        title="Confirmá el cierre"
+        title="Confirme el cierre"
         rows={[
-          ['Rango', `${start} a ${end}`],
-          ['Nombre', label.trim() || `Cierre ${start} a ${end}`],
+          ['Nombre', finalLabel],
+          ['Rango', `${dateOnly(start)} a ${dateOnly(end)}`],
           ['Horas extra', preview ? fmtHours(preview.totals.overtime_hours) : ''],
           ['Consumos', preview ? money(preview.totals.consumption_total) : ''],
           ['Por reponer (informativo)', preview ? fmtMinutes(preview.totals.makeup_due_minutes ?? 0) : ''],
         ]}
-        warning="Los registros incluidos quedarán archivados y ya no se podrán tocar. Hacé un respaldo de la base antes si es un cierre importante."
+        warning={
+          empty
+            ? 'No hay registros en este rango: se generará un cierre vacío solo para mantener la secuencia. Los registros incluidos quedarán archivados y ya no se podrán tocar.'
+            : 'Los registros incluidos quedarán archivados y ya no se podrán tocar. Haga un respaldo de la base antes si es un cierre importante.'
+        }
         confirmLabel="Generar cierre"
         busy={busy}
         onConfirm={generate}

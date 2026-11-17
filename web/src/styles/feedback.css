@@ -1,7 +1,7 @@
 /* feedback.css — pills de estado, badge de conteo, cajas de mensaje */
 
 .pill {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
@@ -33,7 +33,7 @@
   font-weight: 700;
   border-radius: 999px;
   padding: 0.15rem 0.55rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 /* --- Cajas de mensaje --- */
@@ -42,7 +42,7 @@
   color: var(--danger-ink);
   border-radius: 10px;
   padding: 0.6rem 0.8rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .warn-inline {
@@ -50,7 +50,7 @@
   color: var(--pending-ink);
   border-radius: 10px;
   padding: 0.6rem 0.8rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .success h2 {
@@ -61,7 +61,7 @@
   display: inline-block;
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .back-link:hover {

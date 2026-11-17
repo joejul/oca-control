@@ -20,9 +20,8 @@ export default function Layout({children}: { children: ReactNode }) {
                     <img src="/control/logo-icon.png" alt="" className="brand-logo" />
                     OCASO CAFE BAR
                 </div>
+                {user && (<div className="welcome">Bienvenido <strong>{user.display_name}</strong></div>)}
                 <div className="topbar-right">
-                    {user && (<span className="welcome">Bienvenido <strong>{user.display_name}</strong></span>)}
-
                     <NavLink to="/cambiar-pin" className="icon-link" title="Cambiar mi PIN" aria-label="Cambiar mi PIN">
                         🔑
                     </NavLink>

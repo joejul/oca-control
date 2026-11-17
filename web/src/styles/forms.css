@@ -2,7 +2,7 @@
 
 label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--muted);
 }
@@ -10,7 +10,7 @@ label {
 /* Título de un grupo de campos (misma apariencia que un label) */
 .field-title {
   display: block;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--muted);
   margin-bottom: -0.35rem;
@@ -48,7 +48,7 @@ textarea:focus {
 /* Texto de ayuda debajo de un campo */
 .help {
   margin-top: 0.35rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--muted);
 }
 

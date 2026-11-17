@@ -121,9 +121,16 @@ export type ClosureTotals = {
 export type ClosurePreview = {
     start: string;
     end: string;
+    /** true si ya hubo un cierre: el inicio es fijo (día siguiente al fin del anterior). */
+    start_locked: boolean;
+    last_end: string | null;
+    /** Nombre automático, p. ej. "Cierre 1-15 Noviembre". */
+    suggested_label: string;
     rows: ClosureRow[];
     totals: ClosureTotals;
     pending_count: number;
+    /** Registros de fechas anteriores al inicio que nunca se habían cerrado y entran en este cierre. */
+    carried_count: number;
 };
 
 export type ClosureSummary = {
