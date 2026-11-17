@@ -99,6 +99,15 @@ final class Validator
         return $value;
     }
 
+    /** Hora en formato 24h HH:MM (00:00 a 23:59). Devuelve 'HH:MM'. */
+    public static function requireTime(mixed $value, string $field): string
+    {
+        if (!is_string($value) || !preg_match('/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/', trim($value))) {
+            throw HttpException::unprocessable("El campo '$field' debe ser una hora valida (HH:MM).", ['field' => $field]);
+        }
+        return substr(trim($value), 0, 5);
+    }
+
     public static function optionalDate(mixed $value, string $field): ?string
     {
         if ($value === null || $value === '') {

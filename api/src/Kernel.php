@@ -8,8 +8,10 @@ use App\Controllers\AdminUserController;
 use App\Controllers\AuthController;
 use App\Controllers\ClosureController;
 use App\Controllers\ConsumptionController;
-use App\Controllers\EventsController;
+use App\Controllers\EarlyLeaveController;
+use App\Controllers\MakeupController;
 use App\Controllers\OvertimeController;
+use App\Controllers\TimeDebtController;
 use App\Controllers\VacationController;
 use App\Http\HttpException;
 use App\Http\Request;
@@ -65,7 +67,9 @@ final class Kernel
         $usersC       = new AdminUserController();
         $closureC     = new ClosureController();
         $vacationC    = new VacationController();
-        $eventsC      = new EventsController();
+        $earlyLeaveC  = new EarlyLeaveController();
+        $makeupC      = new MakeupController();
+        $timeDebtC    = new TimeDebtController();
 
         // --- Publicas ---
         $this->router->post('/auth/login', fn (Request $r) => $authC->login($r));
@@ -96,25 +100,19 @@ final class Kernel
             fn (Request $r) => $vacationC->mine($this->currentUser)
         ));
 
-        // --- Agenda (cualquier usuario autenticado) ---
-        $this->router->get('/agenda/events', $this->protect(
-            fn (Request $r) => $eventsC->list($r)
+        // --- Salidas anticipadas y reposicion de horas ---
+        $this->router->post('/early-leave', $this->protect(
+            fn (Request $r) => $earlyLeaveC->create($r, $this->currentUser)
         ));
-        $this->router->post('/agenda/events', $this->protect(
-            fn (Request $r) => $eventsC->create($r, $this->currentUser)
+        $this->router->post('/makeup', $this->protect(
+            fn (Request $r) => $makeupC->create($r, $this->currentUser)
         ));
-        $this->router->patch('/agenda/events/{id}', $this->protect(
-            fn (Request $r, array $a) => $eventsC->update($this->currentUser, (int) $a['id'], $r)
+        $this->router->get('/time-debt/mine', $this->protect(
+            fn (Request $r) => $timeDebtC->mine($this->currentUser)
         ));
-        $this->router->post('/agenda/events/{id}/delete', $this->protect(
-            fn (Request $r, array $a) => $eventsC->delete($this->currentUser, (int) $a['id'])
-        ));
-        $this->router->post('/agenda/generate', $this->protect(
-            fn (Request $r) => $eventsC->generate($this->currentUser, $r)
-        ));
-        $this->router->post('/agenda/delete-month', $this->adminOnly(
-            fn (Request $r) => $eventsC->deleteMonth($this->currentUser, $r)
-        ));
+
+        // Modulo Agenda deshabilitado: sus rutas (/agenda/*) ya no se registran, asi que
+        // responden 404. EventsController y las tablas se conservan para poder reactivarlo.
 
         // --- Solo admin ---
         $this->router->get('/admin/overtime', $this->adminOnly(
@@ -140,6 +138,27 @@ final class Kernel
         ));
         $this->router->post('/admin/vacation/{id}/void', $this->adminOnly(
             fn (Request $r, array $a) => $vacationC->void($this->currentUser, (int) $a['id'], $r)
+        ));
+        $this->router->get('/admin/makeup', $this->adminOnly(
+            fn (Request $r) => $makeupC->adminList($r)
+        ));
+        $this->router->post('/admin/makeup/{id}/approve', $this->adminOnly(
+            fn (Request $r, array $a) => $makeupC->review($this->currentUser, (int) $a['id'], 'approved', $r)
+        ));
+        $this->router->post('/admin/makeup/{id}/reject', $this->adminOnly(
+            fn (Request $r, array $a) => $makeupC->review($this->currentUser, (int) $a['id'], 'rejected', $r)
+        ));
+        $this->router->post('/admin/makeup/{id}/void', $this->adminOnly(
+            fn (Request $r, array $a) => $makeupC->void($this->currentUser, (int) $a['id'], $r)
+        ));
+        $this->router->get('/admin/early-leave', $this->adminOnly(
+            fn (Request $r) => $earlyLeaveC->adminList($r)
+        ));
+        $this->router->post('/admin/early-leave/{id}/void', $this->adminOnly(
+            fn (Request $r, array $a) => $earlyLeaveC->void($this->currentUser, (int) $a['id'], $r)
+        ));
+        $this->router->get('/admin/time-debt', $this->adminOnly(
+            fn () => $timeDebtC->adminBalances()
         ));
         $this->router->post('/admin/consumption/{id}/void', $this->adminOnly(
             fn (Request $r, array $a) => $consumptionC->void($this->currentUser, (int) $a['id'], $r)

@@ -7,6 +7,15 @@ label {
   color: var(--muted);
 }
 
+/* Título de un grupo de campos (misma apariencia que un label) */
+.field-title {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: -0.35rem;
+}
+
 /* Asterisco de campo obligatorio: <span class="req">*</span> (componente <Req />) */
 .req {
   color: var(--danger);

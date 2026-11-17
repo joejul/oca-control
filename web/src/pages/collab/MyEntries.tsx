@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuth } from '../../auth';
 import BackLink from '../../components/BackLink';
-import { dateOnly, dateTime, hours as fmtHours, money } from '../../format';
-import type { ConsumptionEntry, OvertimeEntry, VacationRequest } from '../../types';
+import { dateOnly, dateTime, hours as fmtHours, minutes as fmtMinutes, money } from '../../format';
+import type { ConsumptionEntry, OvertimeEntry, TimeDebtBalance, TimeDebtMine, VacationRequest } from '../../types';
 
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Pendiente',
@@ -16,6 +17,7 @@ export default function MyEntries() {
   const [overtime, setOvertime] = useState<OvertimeEntry[]>([]);
   const [consumption, setConsumption] = useState<ConsumptionEntry[]>([]);
   const [vacation, setVacation] = useState<VacationRequest[]>([]);
+  const [debt, setDebt] = useState<TimeDebtBalance | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +32,11 @@ export default function MyEntries() {
         setVacation(v.entries);
       })
       .finally(() => setLoading(false));
+
+    // Aparte: si el módulo de reposiciones no responde, no debe romper el resto de la página.
+    api<TimeDebtMine>('/time-debt/mine')
+      .then((r) => setDebt(r.balance))
+      .catch(() => setDebt(null));
   }, []);
 
   const myConsumption = consumption.filter((c) => c.consumer_id === user?.id && !c.voided);
@@ -73,6 +80,25 @@ export default function MyEntries() {
           </div>
         ))}
       </section>
+
+      {debt && (
+        <section className="card">
+          <h2>Horas por reponer</h2>
+          {debt.due_minutes === 0 && debt.owed_minutes === 0 ? (
+            <p className="muted">Sin salidas anticipadas registradas.</p>
+          ) : (
+            <p>
+              Debés reponer <strong>{fmtMinutes(debt.due_minutes)}</strong>
+              {debt.pending_minutes > 0 && (
+                <span className="muted"> · {fmtMinutes(debt.pending_minutes)} en revisión</span>
+              )}
+            </p>
+          )}
+          <Link to="/horas-por-reponer" className="btn ghost sm">
+            Ver detalle
+          </Link>
+        </section>
+      )}
 
       <section className="card">
         <h2>Vacaciones</h2>

@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
-import { money, hours as fmtHours } from '../../format';
-import type { ClosurePreview, OvertimeEntry, VacationRequest } from '../../types';
+import { money, hours as fmtHours, minutes as fmtMinutes } from '../../format';
+import type { ClosurePreview, MakeupHours, OvertimeEntry, VacationRequest } from '../../types';
 
 export default function Dashboard() {
   const [pending, setPending] = useState<number | null>(null);
   const [preview, setPreview] = useState<ClosurePreview | null>(null);
+  const [due, setDue] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([
       api<{ entries: OvertimeEntry[] }>('/admin/overtime?status=pending'),
       api<{ entries: VacationRequest[] }>('/admin/vacation?status=pending'),
+      api<{ entries: MakeupHours[] }>('/admin/makeup?status=pending'),
     ])
-      .then(([ot, vac]) => setPending(ot.entries.length + vac.entries.length))
+      .then(([ot, vac, mk]) => setPending(ot.entries.length + vac.entries.length + mk.entries.length))
       .catch(() => setPending(null));
+    api<{ total_minutes: number }>('/admin/time-debt')
+      .then((r) => setDue(r.total_minutes))
+      .catch(() => setDue(null));
     api<ClosurePreview>('/admin/closure/preview')
       .then(setPreview)
       .catch(() => setPreview(null));
@@ -31,6 +36,16 @@ export default function Dashboard() {
           <small>{pending === null ? 'Cargando…' : `${pending} por revisar`}</small>
         </span>
         {pending ? <span className="badge">{pending}</span> : null}
+      </Link>
+
+      <Link to="/admin/por-reponer" className="big-btn">
+        <span className="big-btn-icon">🚪</span>
+        <span>
+          <strong>Horas por reponer</strong>
+          <small>
+            {due === null ? 'Cargando…' : due > 0 ? `${fmtMinutes(due)} pendientes entre todos` : 'Nadie debe horas'}
+          </small>
+        </span>
       </Link>
 
       {preview && (

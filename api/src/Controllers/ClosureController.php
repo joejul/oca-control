@@ -9,6 +9,7 @@ use App\Database;
 use App\Http\HttpException;
 use App\Http\Request;
 use App\Http\Response;
+use App\TimeDebt;
 use App\Validator;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -156,17 +157,24 @@ final class ClosureController
         fputcsv($out, ['Cierre', $closure['label']]);
         fputcsv($out, ['Rango', $closure['start_date'] . ' a ' . $closure['end_date']]);
         fputcsv($out, []);
-        fputcsv($out, ['Colaborador', 'Horas extra', 'Consumos (CRC)']);
+        // "Por reponer": en horas decimales para que Excel lo sume. Los cierres
+        // anteriores a este modulo no traen el dato, se dejan en blanco.
+        $dueHours = static fn (array $src): string|float => isset($src['makeup_due_minutes'])
+            ? round(((int) $src['makeup_due_minutes']) / 60, 2)
+            : '';
+
+        fputcsv($out, ['Colaborador', 'Horas extra', 'Consumos (CRC)', 'Por reponer (h)']);
         foreach ($rows as $row) {
             fputcsv($out, [
                 $row['display_name'],
                 $row['overtime_hours'],
                 $row['consumption_total'],
+                $dueHours($row),
             ]);
         }
         $totals = $snapshot['totals'] ?? ['overtime_hours' => 0, 'consumption_total' => 0];
         fputcsv($out, []);
-        fputcsv($out, ['TOTAL', $totals['overtime_hours'], $totals['consumption_total']]);
+        fputcsv($out, ['TOTAL', $totals['overtime_hours'], $totals['consumption_total'], $dueHours($totals)]);
 
         rewind($out);
         $csv = stream_get_contents($out) ?: '';
@@ -235,10 +243,15 @@ final class ClosureController
     {
         $pdo = Database::pdo();
 
+        // "Por reponer" es el saldo vigente al generar el cierre (arrastra de un
+        // cierre a otro; los cierres no archivan salidas anticipadas ni reposiciones).
+        $dueSql = TimeDebt::dueSubquery();
+
         $stmt = $pdo->prepare(
             "SELECT u.id AS user_id, u.display_name,
                     COALESCE(ot.hours, 0)  AS overtime_hours,
-                    COALESCE(co.total, 0)  AS consumption_total
+                    COALESCE(co.total, 0)  AS consumption_total,
+                    COALESCE(td.due, 0)    AS makeup_due_minutes
              FROM users u
              LEFT JOIN (
                  SELECT user_id, SUM(hours) AS hours
@@ -254,8 +267,9 @@ final class ClosureController
                    AND DATE(created_at) BETWEEN :s2 AND :e2
                  GROUP BY consumer_id
              ) co ON co.consumer_id = u.id
+             LEFT JOIN ($dueSql) td ON td.user_id = u.id
              WHERE u.role = 'collaborator'
-               AND (ot.hours IS NOT NULL OR co.total IS NOT NULL OR u.active = 1)
+               AND (ot.hours IS NOT NULL OR co.total IS NOT NULL OR u.active = 1 OR td.due > 0)
              ORDER BY u.display_name"
         );
         $stmt->execute(['s1' => $start, 'e1' => $end, 's2' => $start, 'e2' => $end]);
@@ -263,16 +277,20 @@ final class ClosureController
         $rows = [];
         $sumHours = 0.0;
         $sumConsumption = 0.0;
+        $sumDue = 0;
         foreach ($stmt->fetchAll() as $row) {
             $hours = (float) $row['overtime_hours'];
             $cons  = (float) $row['consumption_total'];
+            $due   = (int) $row['makeup_due_minutes'];
             $sumHours += $hours;
             $sumConsumption += $cons;
+            $sumDue += $due;
             $rows[] = [
-                'user_id'           => (int) $row['user_id'],
-                'display_name'      => $row['display_name'],
-                'overtime_hours'    => $hours,
-                'consumption_total' => $cons,
+                'user_id'            => (int) $row['user_id'],
+                'display_name'       => $row['display_name'],
+                'overtime_hours'     => $hours,
+                'consumption_total'  => $cons,
+                'makeup_due_minutes' => $due,
             ];
         }
 
@@ -286,8 +304,9 @@ final class ClosureController
         return [
             'rows'          => $rows,
             'totals'        => [
-                'overtime_hours'    => round($sumHours, 2),
-                'consumption_total' => round($sumConsumption, 2),
+                'overtime_hours'     => round($sumHours, 2),
+                'consumption_total'  => round($sumConsumption, 2),
+                'makeup_due_minutes' => $sumDue,
             ],
             'pending_count' => (int) $pending->fetchColumn(),
         ];
@@ -341,12 +360,18 @@ final class ClosureController
             return $t ? $dateOnly($d) . ' ' . substr($t, 0, 5) : $dateOnly($d);
         };
 
+        // Los cierres anteriores al modulo de reposiciones no traen este dato: se muestra "—".
+        $due = static fn (array $src): string => isset($src['makeup_due_minutes']) && (int) $src['makeup_due_minutes'] > 0
+            ? TimeDebt::format((int) $src['makeup_due_minutes'])
+            : '—';
+
         $rowsHtml = '';
         foreach ($rows as $r) {
             $rowsHtml .= '<tr>'
                 . '<td>' . $e($r['display_name']) . '</td>'
                 . '<td>' . ($r['overtime_hours'] > 0 ? $hours((float) $r['overtime_hours']) : '—') . '</td>'
                 . '<td>' . ($r['consumption_total'] > 0 ? $money((float) $r['consumption_total']) : '—') . '</td>'
+                . '<td>' . $due($r) . '</td>'
                 . '</tr>';
         }
 
@@ -380,6 +405,7 @@ final class ClosureController
             . '<td>Total</td>'
             . '<td>' . $hours((float) ($totals['overtime_hours'] ?? 0)) . '</td>'
             . '<td>' . $money((float) ($totals['consumption_total'] ?? 0)) . '</td>'
+            . '<td>' . $due($totals) . '</td>'
             . '</tr>';
 
         $label = $e($closure['label']);
@@ -409,7 +435,7 @@ final class ClosureController
 
     <h2>Resumen por colaborador</h2>
     <table>
-        <thead><tr><th>Colaborador</th><th>Horas extra</th><th>Consumos</th></tr></thead>
+        <thead><tr><th>Colaborador</th><th>Horas extra</th><th>Consumos</th><th>Por reponer</th></tr></thead>
         <tbody>{$rowsHtml}</tbody>
         <tfoot>{$totalsHtml}</tfoot>
     </table>

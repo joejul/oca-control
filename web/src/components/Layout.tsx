@@ -35,8 +35,8 @@ export default function Layout({children}: { children: ReactNode }) {
                     <NavLink to="/admin/aprobaciones">Aprobaciones</NavLink>
                     <NavLink to="/admin/cierre">Cierre</NavLink>
                     <NavLink to="/admin/cierres">Historial</NavLink>
+                    <NavLink to="/admin/por-reponer">Por reponer</NavLink>
                     <NavLink to="/admin/usuarios">Usuarios</NavLink>
-                    <NavLink to="/agenda">Agenda</NavLink>
                 </nav>
             )}
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, downloadFile } from '../../api';
 import BackLink from '../../components/BackLink';
-import { dateOnly, dateTime, hours as fmtHours, money } from '../../format';
+import { dateOnly, dateTime, hours as fmtHours, minutes as fmtMinutes, money } from '../../format';
 import type { ClosureDetail as Detail } from '../../types';
 
 export default function ClosureDetail() {
@@ -60,6 +60,7 @@ export default function ClosureDetail() {
               <th>Colaborador</th>
               <th>Horas extra</th>
               <th>Consumos</th>
+              <th>Por reponer</th>
             </tr>
           </thead>
           <tbody>
@@ -68,6 +69,8 @@ export default function ClosureDetail() {
                 <td>{r.display_name}</td>
                 <td>{r.overtime_hours > 0 ? fmtHours(r.overtime_hours) : '—'}</td>
                 <td>{r.consumption_total > 0 ? money(r.consumption_total) : '—'}</td>
+                {/* Los cierres anteriores al módulo de reposiciones no traen este dato. */}
+                <td>{r.makeup_due_minutes ? fmtMinutes(r.makeup_due_minutes) : '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -77,6 +80,7 @@ export default function ClosureDetail() {
                 <td>Total</td>
                 <td>{fmtHours(totals.overtime_hours)}</td>
                 <td>{money(totals.consumption_total)}</td>
+                <td>{totals.makeup_due_minutes ? fmtMinutes(totals.makeup_due_minutes) : '—'}</td>
               </tr>
             </tfoot>
           )}

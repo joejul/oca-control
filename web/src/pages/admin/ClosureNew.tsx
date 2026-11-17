@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../../api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Req from '../../components/Req';
-import { hours as fmtHours, money } from '../../format';
+import { hours as fmtHours, minutes as fmtMinutes, money } from '../../format';
 import type { ClosurePreview } from '../../types';
 
 export default function ClosureNew() {
@@ -37,7 +37,10 @@ export default function ClosureNew() {
     loadPreview();
   }, [loadPreview]);
 
-  const rows = preview?.rows.filter((r) => r.overtime_hours > 0 || r.consumption_total > 0) ?? [];
+  const rows =
+    preview?.rows.filter(
+      (r) => r.overtime_hours > 0 || r.consumption_total > 0 || (r.makeup_due_minutes ?? 0) > 0,
+    ) ?? [];
   const empty = !preview || (preview.totals.overtime_hours === 0 && preview.totals.consumption_total === 0);
 
   async function generate() {
@@ -109,6 +112,7 @@ export default function ClosureNew() {
                     <th>Colaborador</th>
                     <th>Horas</th>
                     <th>Consumos</th>
+                    <th>Por reponer</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,6 +121,7 @@ export default function ClosureNew() {
                       <td>{r.display_name}</td>
                       <td>{r.overtime_hours > 0 ? fmtHours(r.overtime_hours) : '—'}</td>
                       <td>{r.consumption_total > 0 ? money(r.consumption_total) : '—'}</td>
+                      <td>{r.makeup_due_minutes ? fmtMinutes(r.makeup_due_minutes) : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -125,6 +130,11 @@ export default function ClosureNew() {
                     <td>Total</td>
                     <td>{fmtHours(preview.totals.overtime_hours)}</td>
                     <td>{money(preview.totals.consumption_total)}</td>
+                    <td>
+                      {preview.totals.makeup_due_minutes
+                        ? fmtMinutes(preview.totals.makeup_due_minutes)
+                        : '—'}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -149,6 +159,7 @@ export default function ClosureNew() {
           ['Nombre', label.trim() || `Cierre ${start} a ${end}`],
           ['Horas extra', preview ? fmtHours(preview.totals.overtime_hours) : ''],
           ['Consumos', preview ? money(preview.totals.consumption_total) : ''],
+          ['Por reponer (informativo)', preview ? fmtMinutes(preview.totals.makeup_due_minutes ?? 0) : ''],
         ]}
         warning="Los registros incluidos quedarán archivados y ya no se podrán tocar. Hacé un respaldo de la base antes si es un cierre importante."
         confirmLabel="Generar cierre"

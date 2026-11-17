@@ -2,17 +2,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../../api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Req from '../../components/Req';
-import { dateOnly, dateTime, hours as fmtHours } from '../../format';
-import type { OvertimeEntry, VacationRequest } from '../../types';
+import { dateOnly, dateTime, hours as fmtHours, minutes as fmtMinutes } from '../../format';
+import type { MakeupHours, OvertimeEntry, VacationRequest } from '../../types';
 
-type Resource = 'overtime' | 'vacation';
-type Entry = OvertimeEntry | VacationRequest;
+type Resource = 'overtime' | 'vacation' | 'makeup';
+type Entry = OvertimeEntry | VacationRequest | MakeupHours;
 type ActionKind = 'approve' | 'reject' | 'void';
 type Action = { kind: ActionKind; entry: Entry };
 
 const RESOURCE_LABEL: Record<Resource, string> = {
   overtime: 'horas extra',
   vacation: 'vacaciones',
+  makeup: 'reposiciones',
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -23,6 +24,10 @@ const STATUS_LABEL: Record<string, string> = {
 
 function isOvertime(e: Entry): e is OvertimeEntry {
   return 'work_date' in e;
+}
+
+function isMakeup(e: Entry): e is MakeupHours {
+  return 'makeup_date' in e;
 }
 
 export default function Approvals() {
@@ -86,6 +91,9 @@ export default function Approvals() {
         <button className={resource === 'vacation' ? 'on' : ''} onClick={() => setResource('vacation')}>
           Vacaciones
         </button>
+        <button className={resource === 'makeup' ? 'on' : ''} onClick={() => setResource('makeup')}>
+          Reposiciones
+        </button>
       </div>
 
       <div className="segmented">
@@ -112,6 +120,13 @@ export default function Approvals() {
             <>
               <p>
                 {fmtHours(e.hours)} · {dateOnly(e.work_date)}
+              </p>
+              {e.note && <p className="muted">{e.note}</p>}
+            </>
+          ) : isMakeup(e) ? (
+            <>
+              <p>
+                {fmtMinutes(e.minutes)} · {dateOnly(e.makeup_date)}
               </p>
               {e.note && <p className="muted">{e.note}</p>}
             </>
@@ -155,11 +170,17 @@ export default function Approvals() {
                   ['Horas', fmtHours(action.entry.hours)],
                   ['Fecha', dateOnly(action.entry.work_date)],
                 ]
-              : [
-                  ['Colaborador', action.entry.display_name ?? ''],
-                  ['Fecha', dateOnly(action.entry.request_date)],
-                  ['Descripción', action.entry.description ?? '—'],
-                ]
+              : isMakeup(action.entry)
+                ? [
+                    ['Colaborador', action.entry.display_name ?? ''],
+                    ['Tiempo repuesto', fmtMinutes(action.entry.minutes)],
+                    ['Fecha', dateOnly(action.entry.makeup_date)],
+                  ]
+                : [
+                    ['Colaborador', action.entry.display_name ?? ''],
+                    ['Fecha', dateOnly(action.entry.request_date)],
+                    ['Descripción', action.entry.description ?? '—'],
+                  ]
             : []
         }
         warning={

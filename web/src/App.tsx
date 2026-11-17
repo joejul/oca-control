@@ -7,6 +7,9 @@ import Home from './pages/collab/Home';
 import OvertimeForm from './pages/collab/OvertimeForm';
 import ConsumptionForm from './pages/collab/ConsumptionForm';
 import VacationForm from './pages/collab/VacationForm';
+import TimeDebt from './pages/collab/TimeDebt';
+import EarlyLeaveForm from './pages/collab/EarlyLeaveForm';
+import MakeupForm from './pages/collab/MakeupForm';
 import MyEntries from './pages/collab/MyEntries';
 import Dashboard from './pages/admin/Dashboard';
 import Approvals from './pages/admin/Approvals';
@@ -14,10 +17,7 @@ import ClosureNew from './pages/admin/ClosureNew';
 import ClosureHistory from './pages/admin/ClosureHistory';
 import ClosureDetail from './pages/admin/ClosureDetail';
 import Users from './pages/admin/Users';
-import AgendaShell from './pages/agenda/AgendaShell';
-import Agenda from './pages/agenda/Agenda';
-import Guia from './pages/agenda/Guia';
-import Resumen from './pages/agenda/Resumen';
+import TimeDebtAdmin from './pages/admin/TimeDebtAdmin';
 
 function Protected({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const { user, loading } = useAuth();
@@ -38,24 +38,17 @@ export default function App() {
         path="/"
         element={
           <Protected>
-            {user?.username === 'ocaso' ? (
-              <Navigate to="/agenda" replace />
-            ) : user?.role === 'admin' ? (
-              <Navigate to="/admin" replace />
-            ) : (
-              <Home />
-            )}
+            {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Home />}
           </Protected>
         }
       />
       <Route path="/horas-extra" element={<Protected><OvertimeForm /></Protected>} />
       <Route path="/consumo" element={<Protected><ConsumptionForm /></Protected>} />
       <Route path="/vacaciones" element={<Protected><VacationForm /></Protected>} />
+      <Route path="/horas-por-reponer" element={<Protected><TimeDebt /></Protected>} />
+      <Route path="/salida-anticipada" element={<Protected><EarlyLeaveForm /></Protected>} />
+      <Route path="/reposicion" element={<Protected><MakeupForm /></Protected>} />
       <Route path="/mis-registros" element={<Protected><MyEntries /></Protected>} />
-
-      <Route path="/agenda" element={<Protected><AgendaShell><Agenda /></AgendaShell></Protected>} />
-      <Route path="/agenda/guia" element={<Protected><AgendaShell><Guia /></AgendaShell></Protected>} />
-      <Route path="/agenda/resumen" element={<Protected><AgendaShell><Resumen /></AgendaShell></Protected>} />
 
       <Route path="/admin" element={<Protected admin><Dashboard /></Protected>} />
       <Route path="/admin/aprobaciones" element={<Protected admin><Approvals /></Protected>} />
@@ -63,6 +56,7 @@ export default function App() {
       <Route path="/admin/cierres" element={<Protected admin><ClosureHistory /></Protected>} />
       <Route path="/admin/cierres/:id" element={<Protected admin><ClosureDetail /></Protected>} />
       <Route path="/admin/usuarios" element={<Protected admin><Users /></Protected>} />
+      <Route path="/admin/por-reponer" element={<Protected admin><TimeDebtAdmin /></Protected>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
