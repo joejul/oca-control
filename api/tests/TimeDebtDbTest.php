@@ -34,6 +34,8 @@ final class TimeDebtDbTest extends TestCase
         if (!is_file($configFile)) {
             self::markTestSkipped('No hay config.php (prueba de base de datos).');
         }
+        // Igual que en produccion (bootstrap.php): PHP y la sesion de la base en la misma zona horaria.
+        date_default_timezone_set('America/Costa_Rica');
         try {
             Database::reset();
             $this->pdo = Database::init(Config::load($configFile));

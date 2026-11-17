@@ -31,6 +31,13 @@ final class Database
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
 
+        // El servidor de base de datos puede estar en UTC (Hostinger lo esta). Sin esto, NOW() y
+        // created_at quedan 6 horas adelantados y todo lo registrado despues de las 6 pm de Costa
+        // Rica queda con la fecha del dia siguiente, lo que descuadra los cierres. Se alinea la
+        // sesion con la zona horaria de la app.
+        $offset = (new \DateTimeImmutable('now', new \DateTimeZone($config->timezone())))->format('P');
+        self::$pdo->exec("SET time_zone = '" . $offset . "'");
+
         return self::$pdo;
     }
 

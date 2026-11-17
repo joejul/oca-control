@@ -32,6 +32,8 @@ final class ClosureDbTest extends TestCase
         if (!is_file($configFile)) {
             self::markTestSkipped('No hay config.php (prueba de base de datos).');
         }
+        // Igual que en produccion (bootstrap.php): PHP y la sesion de la base en la misma zona horaria.
+        date_default_timezone_set('America/Costa_Rica');
         try {
             Database::reset();
             $this->pdo = Database::init(Config::load($configFile));
@@ -96,6 +98,20 @@ final class ClosureDbTest extends TestCase
              VALUES (?, ?, ?, 'x', 'approved', NOW())"
         )->execute([$this->collabId, $date, $hours]);
         return (int) $this->pdo->lastInsertId();
+    }
+
+    public function testLaSesionDeBaseDeDatosUsaLaZonaHorariaDeLaApp(): void
+    {
+        // Sin esto, en un servidor en UTC lo registrado despues de las 6 pm de Costa Rica
+        // quedaria con la fecha del dia siguiente.
+        $offset = (new \DateTimeImmutable('now', new \DateTimeZone(date_default_timezone_get())))->format('P');
+        $dbOffset = $this->pdo->query(
+            "SELECT CONCAT(IF(TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW()) < 0, '-', '+'),
+                    LPAD(ABS(TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW())) DIV 60, 2, '0'), ':',
+                    LPAD(ABS(TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW())) MOD 60, 2, '0'))"
+        )->fetchColumn();
+        self::assertSame($offset, $dbOffset);
+        self::assertSame(date('Y-m-d'), $this->pdo->query('SELECT CURDATE()')->fetchColumn());
     }
 
     public function testPreviewContinuaDelCierreAnteriorYIgnoraElInicioEnviado(): void
