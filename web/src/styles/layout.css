@@ -128,3 +128,18 @@
 .stack > * + * {
   margin-top: 1rem;
 }
+
+/* Enlace de ícono en la barra superior (cambiar PIN) */
+.icon-link {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+  padding: 0.35rem 0.45rem;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.icon-link:hover,
+.icon-link.active {
+  background: rgba(255, 255, 255, 0.14);
+}

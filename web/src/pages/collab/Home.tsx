@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
+import News from '../../components/News';
 import { useAuth } from '../../auth';
 import { minutes as fmtMinutes } from '../../format';
 import type { TimeDebtMine } from '../../types';
@@ -19,6 +20,8 @@ export default function Home() {
   return (
     <div className="stack">
       <p className="hello">Hola, {user?.display_name} 👋</p>
+
+      <News />
 
       <Link to="/horas-extra" className="big-btn">
         <span className="big-btn-icon">⏱️</span>

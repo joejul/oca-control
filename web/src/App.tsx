@@ -11,6 +11,7 @@ import TimeDebt from './pages/collab/TimeDebt';
 import EarlyLeaveForm from './pages/collab/EarlyLeaveForm';
 import MakeupForm from './pages/collab/MakeupForm';
 import MyEntries from './pages/collab/MyEntries';
+import ChangePin from './pages/ChangePin';
 import Dashboard from './pages/admin/Dashboard';
 import Approvals from './pages/admin/Approvals';
 import ClosureNew from './pages/admin/ClosureNew';
@@ -18,6 +19,7 @@ import ClosureHistory from './pages/admin/ClosureHistory';
 import ClosureDetail from './pages/admin/ClosureDetail';
 import Users from './pages/admin/Users';
 import TimeDebtAdmin from './pages/admin/TimeDebtAdmin';
+import AuditLog from './pages/admin/AuditLog';
 
 function Protected({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
   const { user, loading } = useAuth();
@@ -49,6 +51,7 @@ export default function App() {
       <Route path="/salida-anticipada" element={<Protected><EarlyLeaveForm /></Protected>} />
       <Route path="/reposicion" element={<Protected><MakeupForm /></Protected>} />
       <Route path="/mis-registros" element={<Protected><MyEntries /></Protected>} />
+      <Route path="/cambiar-pin" element={<Protected><ChangePin /></Protected>} />
 
       <Route path="/admin" element={<Protected admin><Dashboard /></Protected>} />
       <Route path="/admin/aprobaciones" element={<Protected admin><Approvals /></Protected>} />
@@ -57,6 +60,7 @@ export default function App() {
       <Route path="/admin/cierres/:id" element={<Protected admin><ClosureDetail /></Protected>} />
       <Route path="/admin/usuarios" element={<Protected admin><Users /></Protected>} />
       <Route path="/admin/por-reponer" element={<Protected admin><TimeDebtAdmin /></Protected>} />
+      <Route path="/admin/bitacora" element={<Protected admin><AuditLog /></Protected>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

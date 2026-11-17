@@ -82,3 +82,20 @@
 .login h1 {
   margin-bottom: 0;
 }
+
+/* --- Novedades del colaborador (Home) --- */
+.news h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.news-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.news-item + .news-item {
+  border-top: 1px solid var(--line);
+  padding-top: 0.6rem;
+}

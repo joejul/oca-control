@@ -23,6 +23,9 @@ export default function Layout({children}: { children: ReactNode }) {
                 <div className="topbar-right">
                     {user && (<span className="welcome">Bienvenido <strong>{user.display_name}</strong></span>)}
 
+                    <NavLink to="/cambiar-pin" className="icon-link" title="Cambiar mi PIN" aria-label="Cambiar mi PIN">
+                        🔑
+                    </NavLink>
                     <button type="button" className="btn ghost sm" onClick={handleLogout}> Salir</button>
                 </div>
             </header>
@@ -37,6 +40,7 @@ export default function Layout({children}: { children: ReactNode }) {
                     <NavLink to="/admin/cierres">Historial</NavLink>
                     <NavLink to="/admin/por-reponer">Por reponer</NavLink>
                     <NavLink to="/admin/usuarios">Usuarios</NavLink>
+                    <NavLink to="/admin/bitacora">Bitácora</NavLink>
                 </nav>
             )}
 

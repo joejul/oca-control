@@ -39,6 +39,20 @@ final class AuthController
     }
 
     /** @param array<string,mixed> $user */
+    public function changePin(Request $r, array $user): Response
+    {
+        $current = $r->input('current_pin');
+        if (!is_string($current) && !is_int($current)) {
+            throw HttpException::unprocessable('El PIN actual es obligatorio.', ['field' => 'current_pin']);
+        }
+        $new = Validator::requirePin($r->input('new_pin'), 'new_pin');
+
+        $this->auth->changePin($user, (string) $current, $new, $r->bearerToken());
+
+        return Response::json(['ok' => true]);
+    }
+
+    /** @param array<string,mixed> $user */
     public function me(array $user): Response
     {
         return Response::json(['user' => $this->auth->publicUser($user)]);

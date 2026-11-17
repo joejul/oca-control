@@ -181,3 +181,39 @@ export type AdminUser = {
     locked: boolean;
     created_at: string;
 };
+
+export type NewsKind = 'overtime' | 'vacation' | 'makeup' | 'early_leave';
+export type NewsEvent = 'approved' | 'rejected' | 'voided';
+
+/** Algo que el administrador resolvió sobre un registro del colaborador. */
+export type NewsItem = {
+    kind: NewsKind;
+    id: number;
+    event: NewsEvent;
+    ref_date: string;
+    /** Horas (overtime) o minutos (makeup / early_leave); null en vacaciones. */
+    amount: number | null;
+    note: string | null;
+    event_at: string;
+    unread: boolean;
+};
+
+export type AuditRow = {
+    id: number;
+    created_at: string;
+    actor_id: number | null;
+    actor_name: string | null;
+    action: string;
+    entity_type: string | null;
+    entity_id: number | null;
+    /** Colaborador dueño del registro afectado (si aplica). */
+    subject_name: string | null;
+    details: Record<string, unknown> | null;
+};
+
+export type AuditPage = {
+    rows: AuditRow[];
+    total: number;
+    page: number;
+    per_page: number;
+};

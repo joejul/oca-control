@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App;
 
 use App\Controllers\AdminUserController;
+use App\Controllers\AuditController;
 use App\Controllers\AuthController;
 use App\Controllers\ClosureController;
 use App\Controllers\ConsumptionController;
 use App\Controllers\EarlyLeaveController;
 use App\Controllers\MakeupController;
+use App\Controllers\NotificationController;
 use App\Controllers\OvertimeController;
 use App\Controllers\TimeDebtController;
 use App\Controllers\VacationController;
@@ -70,6 +72,8 @@ final class Kernel
         $earlyLeaveC  = new EarlyLeaveController();
         $makeupC      = new MakeupController();
         $timeDebtC    = new TimeDebtController();
+        $notificationC = new NotificationController();
+        $auditC       = new AuditController();
 
         // --- Publicas ---
         $this->router->post('/auth/login', fn (Request $r) => $authC->login($r));
@@ -77,6 +81,15 @@ final class Kernel
         // --- Autenticadas (cualquier rol) ---
         $this->router->post('/auth/logout', $this->protect(fn (Request $r) => $authC->logout($r)));
         $this->router->get('/me', $this->protect(fn (Request $r) => $authC->me($this->currentUser)));
+        $this->router->post('/me/pin', $this->protect(
+            fn (Request $r) => $authC->changePin($r, $this->currentUser)
+        ));
+        $this->router->get('/notifications', $this->protect(
+            fn (Request $r) => $notificationC->mine($this->currentUser)
+        ));
+        $this->router->post('/notifications/seen', $this->protect(
+            fn (Request $r) => $notificationC->markSeen($r, $this->currentUser)
+        ));
         $this->router->get('/collaborators', $this->protect(
             fn (Request $r) => $usersC->collaborators()
         ));
@@ -162,6 +175,10 @@ final class Kernel
         ));
         $this->router->post('/admin/consumption/{id}/void', $this->adminOnly(
             fn (Request $r, array $a) => $consumptionC->void($this->currentUser, (int) $a['id'], $r)
+        ));
+
+        $this->router->get('/admin/audit', $this->adminOnly(
+            fn (Request $r) => $auditC->list($r)
         ));
 
         $this->router->get('/admin/users', $this->adminOnly(fn () => $usersC->list()));

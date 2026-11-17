@@ -86,3 +86,17 @@
   font-weight: 700;
   border-top: 2px solid var(--ink);
 }
+
+/* --- Bitácora --- */
+.audit-when {
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}

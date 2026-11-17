@@ -117,6 +117,43 @@ final class Auth
             ->execute(['h' => hash('sha256', $token)]);
     }
 
+    /**
+     * Cambio de PIN por el propio usuario. El PIN actual cuenta como credencial: si falla
+     * suma al mismo bloqueo por intentos que el login (si no, se podria adivinar el PIN
+     * de alguien con la sesion abierta). Cierra las demas sesiones y conserva la actual.
+     *
+     * @param array<string,mixed> $user fila completa de users
+     */
+    public function changePin(array $user, string $current, string $new, ?string $currentToken): void
+    {
+        if ($user['locked_until'] !== null && strtotime((string) $user['locked_until']) > time()) {
+            throw HttpException::tooManyRequests(
+                'Cuenta bloqueada temporalmente por intentos fallidos. Intenta mas tarde.'
+            );
+        }
+
+        if (!password_verify($current, (string) $user['credential_hash'])) {
+            $this->registerFailedAttempt($user);
+            throw HttpException::unprocessable('El PIN actual no es correcto.', ['field' => 'current_pin']);
+        }
+
+        if ($current === $new) {
+            throw HttpException::unprocessable('El PIN nuevo debe ser distinto al actual.', ['field' => 'new_pin']);
+        }
+
+        $pdo = Database::pdo();
+        $id  = (int) $user['id'];
+
+        $pdo->prepare(
+            'UPDATE users SET credential_hash = :h, failed_attempts = 0, locked_until = NULL WHERE id = :id'
+        )->execute(['h' => self::hashSecret($new), 'id' => $id]);
+
+        $pdo->prepare('DELETE FROM auth_tokens WHERE user_id = :id AND token_hash <> :keep')
+            ->execute(['id' => $id, 'keep' => $currentToken !== null ? hash('sha256', $currentToken) : '']);
+
+        Audit::log($id, 'user.change_pin', 'user', $id);
+    }
+
     public static function hashSecret(string $secret): string
     {
         return password_hash($secret, PASSWORD_BCRYPT);
