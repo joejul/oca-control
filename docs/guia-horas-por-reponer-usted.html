@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Guia rapida: Horas por reponer</title>
+<style>
+    @page { margin: 0; }
+    html { background: #ffffff; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 14px; color: #1c3144; margin: 0; background: #ffffff; }
+    .band { background: #1c3144; color: #ffffff; padding: 40px 48px 34px; }
+    .eyebrow { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #ffba08; font-weight: bold; }
+    h1 { font-size: 38px; margin: 8px 0 8px; }
+    .lead { font-size: 16px; color: #d5dde6; margin: 0; }
+    .body { padding: 30px 48px 0; }
+    table.cols { width: 100%; border-collapse: separate; border-spacing: 0; }
+    td.col { width: 50%; vertical-align: top; border: 1px solid #d5dae0; padding: 20px 20px 18px; }
+    td.gap { width: 20px; }
+    .num { display: inline-block; background: #1c3144; color: #fff; font-weight: bold; font-size: 15px;
+           width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 14px; }
+    h2 { font-size: 18px; margin: 12px 0 8px; }
+    .path { font-size: 12px; color: #55677a; margin: 0 0 12px; }
+    .path b { color: #1c3144; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin-bottom: 6px; }
+    .note { margin: 12px 0 0; color: #55677a; font-size: 13px; }
+    .example { margin-top: 26px; background: #fff2d1; border-left: 6px solid #ffba08; padding: 16px 20px; font-size: 15px; line-height: 1.5; }
+    h3 { font-size: 18px; margin: 32px 0 10px; }
+    .rules li { margin-bottom: 11px; line-height: 1.45; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="band">
+    <div class="eyebrow">OCASO Cafe Bar &middot; Control</div>
+    <h1>Horas por reponer</h1>
+    <p class="lead">Si sale antes de su hora, esas horas las repone despu&eacute;s. La app le lleva el saldo.</p>
+</div>
+
+<div class="body">
+    <table class="cols">
+        <tr>
+            <td class="col">
+                <span class="num">1</span>
+                <h2>Sali&oacute; antes: registre la salida</h2>
+                <p class="path"><b>Inicio</b> &rsaquo; <b>Horas por reponer</b> &rsaquo; <b>Registrar salida anticipada</b></p>
+                <ul>
+                    <li><b>Fecha</b> en que sali&oacute;.</li>
+                    <li><b>Hora oficial</b>: la que le tocaba salir.</li>
+                    <li><b>Hora real</b>: a la que se fue.</li>
+                    <li><b>Detalle</b>: el motivo (obligatorio).</li>
+                </ul>
+                <p class="note">La app calcula cu&aacute;nto debe reponer.</p>
+            </td>
+            <td class="gap"></td>
+            <td class="col">
+                <span class="num">2</span>
+                <h2>Repuso: registre la reposici&oacute;n</h2>
+                <p class="path"><b>Inicio</b> &rsaquo; <b>Horas por reponer</b> &rsaquo; <b>Registrar reposici&oacute;n</b></p>
+                <ul>
+                    <li><b>Fecha</b> en que repuso.</li>
+                    <li><b>Horas y minutos</b> repuestos (m&aacute;ximo lo que debe).</li>
+                    <li><b>Detalle</b>: opcional.</li>
+                </ul>
+                <p class="note">Queda pendiente hasta que el administrador la apruebe; ah&iacute; le baja el saldo.</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="example">
+        <b>Ejemplo:</b> le tocaba salir a las 5:00 pm y sali&oacute; a las 3:30 pm: debe <b>1 h 30 min</b>.
+        Repone 1 h (aprobada) y le faltan <b>30 min</b>.
+    </div>
+
+    <h3>Tenga presente</h3>
+    <ul class="rules">
+        <li><b>Lo que se guarda no se edita ni se borra.</b> Si se equivoca, av&iacute;sele al administrador: &eacute;l lo anula y usted lo vuelve a registrar.</li>
+        <li>Registre la salida <b>el mismo d&iacute;a</b>. Solo una salida anticipada por d&iacute;a.</li>
+        <li>No se aceptan fechas futuras ni de hace m&aacute;s de 60 d&iacute;as.</li>
+        <li>Si <b>Registrar reposici&oacute;n</b> aparece apagado: no debe horas, o su saldo ya est&aacute; cubierto por reposiciones en revisi&oacute;n.</li>
+        <li><b>Reponer no es hacer horas extra:</b> no registre las mismas horas en los dos lugares.</li>
+        <li>Su saldo siempre est&aacute; en <b>Inicio &rsaquo; Horas por reponer</b>: <b>Por reponer</b> es lo que todav&iacute;a debe y <b>En revisi&oacute;n</b> son reposiciones esperando aprobaci&oacute;n.</li>
+    </ul>
+</div>
+
+</body>
+</html>
