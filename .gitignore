@@ -22,3 +22,6 @@
 # generated / build cache
 /api/.phpunit.cache/
 *.tsbuildinfo
+
+# volcados de la base (datos reales, nunca a git)
+/backups/
